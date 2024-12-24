@@ -1,22 +1,64 @@
 <?php
 // auth.php
 session_start();
+require_once 'Database.php';
 
 class Auth {
     private $config;
+    private $db;
     
     public function __construct() {
         $this->config = require 'config.php';
+        $this->db = Database::getInstance();
+    }
+    
+    public function login($username, $password) {
+        // Vérifier les tentatives de connexion
+        $attempts = $this->db->checkLoginAttempts($username);
+        if ($attempts >= $this->config['security']['max_login_attempts']) {
+            return ['success' => false, 'error' => 'too_many_attempts'];
+        }
+        
+        $stmt = $this->db->prepare('
+            SELECT id, username, password_hash, role, description 
+            FROM users 
+            WHERE username = :username
+        ');
+        
+        $stmt->bindValue(':username', $username, SQLITE3_TEXT);
+        $result = $stmt->execute();
+        $user = $result->fetchArray(SQLITE3_ASSOC);
+        
+        // Enregistrer la tentative
+        $this->db->logLoginAttempt($username);
+        
+        if ($user && password_verify($password, $user['password_hash'])) {
+            $_SESSION['auth_time'] = time();
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['role'] = $user['role'];
+            $_SESSION['description'] = $user['description'];
+            
+            // Log de connexion réussie
+            $this->db->logActivity($user['id'], 'login');
+            
+            return ['success' => true, 'user' => [
+                'username' => $user['username'],
+                'role' => $user['role'],
+                'description' => $user['description']
+            ]];
+        }
+        
+        return ['success' => false, 'error' => 'invalid_credentials'];
     }
     
     public function isAuthenticated() {
-        if (!isset($_SESSION['auth_time']) || !isset($_SESSION['username'])) {
+        if (!isset($_SESSION['auth_time']) || !isset($_SESSION['user_id'])) {
             return false;
         }
         
-        // Vérifier si la session n'a pas expiré
         $elapsed = time() - $_SESSION['auth_time'];
-        if ($elapsed > $this->config['session_duration']) {
+        if ($elapsed > $this->config['security']['session_duration']) {
             $this->logout();
             return false;
         }
@@ -24,36 +66,25 @@ class Auth {
         return true;
     }
     
-    public function login($username, $password) {
-        if (!isset($this->config['users'][$username])) {
+    public function hasPermission($action) {
+        if (!$this->isAuthenticated()) {
             return false;
         }
-
-        if ($this->config['users'][$username]['password'] === $password) {
-            $_SESSION['auth_time'] = time();
-            $_SESSION['username'] = $username;
-            $_SESSION['user_description'] = $this->config['users'][$username]['description'];
-            return true;
-        }
-        return false;
+        
+        $role = $_SESSION['role'];
+        return isset($this->config['roles'][$role][$action]) && 
+               $this->config['roles'][$role][$action];
     }
     
     public function logout() {
-        session_destroy();
-    }
-
-    public function getCurrentUser() {
-        if ($this->isAuthenticated()) {
-            return [
-                'username' => $_SESSION['username'],
-                'description' => $_SESSION['user_description']
-            ];
+        if (isset($_SESSION['user_id'])) {
+            $this->db->logActivity($_SESSION['user_id'], 'logout');
         }
-        return null;
+        session_destroy();
     }
 }
 
-// Point d'entrée API pour l'authentification
+// Point d'entrée API
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
     
@@ -64,15 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($data['action']) {
             case 'login':
                 if (isset($data['username']) && isset($data['password'])) {
-                    $success = $auth->login($data['username'], $data['password']);
-                    if ($success) {
-                        $user = $auth->getCurrentUser();
-                        echo json_encode(['success' => true, 'user' => $user]);
-                    } else {
-                        echo json_encode(['success' => false, 'error' => 'Identifiants incorrects']);
-                    }
-                } else {
-                    echo json_encode(['success' => false, 'error' => 'Identifiants manquants']);
+                    $result = $auth->login($data['username'], $data['password']);
+                    echo json_encode($result);
                 }
                 break;
                 
@@ -82,11 +106,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'check':
-                $isAuthenticated = $auth->isAuthenticated();
-                $user = $isAuthenticated ? $auth->getCurrentUser() : null;
                 echo json_encode([
-                    'authenticated' => $isAuthenticated,
-                    'user' => $user
+                    'authenticated' => $auth->isAuthenticated(),
+                    'user' => $auth->isAuthenticated() ? [
+                        'username' => $_SESSION['username'],
+                        'role' => $_SESSION['role'],
+                        'description' => $_SESSION['description']
+                    ] : null
                 ]);
                 break;
         }

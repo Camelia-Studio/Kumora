@@ -1,21 +1,36 @@
 <?php
 // config.php
 return [
-    'users' => [
-        'admin' => [
-            'password' => 'votre_mot_de_passe_admin',  // À changer !
-            'description' => 'Administrateur'
-        ],
-        'user1' => [
-            'password' => 'votre_mot_de_passe_user1',  // À changer !
-            'description' => 'Utilisateur 1'
-        ],
-        'invite' => [
-            'password' => 'votre_mot_de_passe_invite',  // À changer !
-            'description' => 'Invité'
-        ]
+    'db' => [
+        'path' => __DIR__ . '/database.sqlite'
     ],
-    'session_duration' => 3600, // Durée de la session en secondes (1 heure)
-    // Vous pouvez ajouter autant d'utilisateurs que nécessaire
+    'security' => [
+        'session_duration' => 3600,
+        'max_login_attempts' => 3,
+        'attempt_window' => 1800 // 30 minutes
+    ],
+    'roles' => [
+        'admin' => [
+            'upload' => true,
+            'download' => true,
+            'delete' => true,
+            'rename' => true,
+            'view_logs' => true
+        ],
+        'user' => [
+            'upload' => true,
+            'download' => true,
+            'delete' => false,
+            'rename' => false,
+            'view_logs' => false
+        ],
+        'visitor' => [
+            'upload' => false,
+            'download' => true,
+            'delete' => false,
+            'rename' => false,
+            'view_logs' => false
+        ]
+    ]
 ];
 ?>
