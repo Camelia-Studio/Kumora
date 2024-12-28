@@ -28,3 +28,7 @@
 .vscode/
 .fleet/
 *.iml
+
+
+/uploads/*
+!uploads/.gitkeep
