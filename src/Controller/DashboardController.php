@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\FilesystemReader;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -13,25 +15,53 @@ use Symfony\Component\HttpFoundation\HeaderUtils;
 
 class DashboardController extends AbstractController
 {
+    /**
+     * @throws FilesystemException
+     */
     #[Route('/', name: 'app_dashboard')]
-    public function index(Filesystem $defaultAdapter, UrlGeneratorInterface $urlGenerator): Response
+    public function index(Filesystem $defaultAdapter, UrlGeneratorInterface $urlGenerator, #[MapQueryParameter('path')] string $path = ''): Response
     {
-        $files = $defaultAdapter->listContents('/', Filesystem::LIST_DEEP);
+        // On retire les slashs en début et fin de chaîne
+        $path = trim($path, '/');
+        // On retire les chemins relatifs
+        $path = str_replace('..', '', $path);
+        $path = str_replace('//', '/', $path);
+
+        if ($path !== '' && !$defaultAdapter->directoryExists($path)) {
+            throw $this->createNotFoundException("Ce dossier n'existe pas !");
+        }
+
+
+        $files = $defaultAdapter->listContents('/' . $path);
 
         $realFiles = [];
         
-        foreach ($files as $key => $file) {
-            if ($file['type'] === 'file' && !str_starts_with($file['path'], '.')) {
+        foreach ($files as $file) {
+            if (!str_starts_with($file['path'], '.')) {
                 $realFiles[] = [
+                    'type' => $file['type'],
                     'path' => $file['path'],
-                    'url' => $this->generateUrl('app_file_proxy', ['filename' => $file['path']], UrlGeneratorInterface::ABSOLUTE_URL),
+                    'last_modified' => $file['lastModified'],
+                    'size' => $file['fileSize'] ?? null,
+                    'url' => $file['type'] === 'file'
+                        ?  $this->generateUrl('app_file_proxy', ['filename' => $file['path']], UrlGeneratorInterface::ABSOLUTE_URL)
+                        :  $this->generateUrl('app_dashboard', ['path' => $path . '/' . $file['path']]),
                 ];
             }
         }
 
+        // On trie par type puis par nom
+        usort($realFiles, static function ($a, $b) {
+            if ($a['type'] === $b['type']) {
+                return $a['path'] <=> $b['path'];
+            } else {
+                return $a['type'] <=> $b['type'];
+            }
+        });
 
         return $this->render('dashboard/index.html.twig', [
             'files' => $realFiles,
+            'path' => $path,
         ]);
     }
 
