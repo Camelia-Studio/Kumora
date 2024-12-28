@@ -12,13 +12,16 @@ use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[Route('/files', 'app_files_')]
+#[IsGranted('ROLE_USER')]
 class DashboardController extends AbstractController
 {
     /**
      * @throws FilesystemException
      */
-    #[Route('/', name: 'app_dashboard')]
+    #[Route('/', name: 'index')]
     public function index(Filesystem $defaultAdapter, UrlGeneratorInterface $urlGenerator, #[MapQueryParameter('path')] string $path = ''): Response
     {
         // On retire les slashs en début et fin de chaîne
@@ -44,8 +47,8 @@ class DashboardController extends AbstractController
                     'last_modified' => $file['lastModified'],
                     'size' => $file['fileSize'] ?? null,
                     'url' => $file['type'] === 'file'
-                        ?  $this->generateUrl('app_file_proxy', ['filename' => $file['path']], UrlGeneratorInterface::ABSOLUTE_URL)
-                        :  $this->generateUrl('app_dashboard', ['path' => $path . '/' . $file['path']]),
+                        ?  $this->generateUrl('app_files_app_file_proxy', ['filename' => $file['path']], UrlGeneratorInterface::ABSOLUTE_URL)
+                        :  $this->generateUrl('app_files_index', ['path' => $path . '/' . $file['path']]),
                 ];
             }
         }

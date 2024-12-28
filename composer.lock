@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b7708b5019145d17ad3512f8c441f6bc",
+    "content-hash": "e0cd8ceeb323f7d4ce2c5aceb5d7eb3d",
     "packages": [
         {
             "name": "composer/semver",
@@ -1378,6 +1378,73 @@
             "time": "2024-12-27T00:36:43+00:00"
         },
         {
+            "name": "gehrisandro/tailwind-merge-php",
+            "version": "v1.1.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/gehrisandro/tailwind-merge-php.git",
+                "reference": "dc11b9d4a625dd5be885900e5ef14c3efa260277"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/gehrisandro/tailwind-merge-php/zipball/dc11b9d4a625dd5be885900e5ef14c3efa260277",
+                "reference": "dc11b9d4a625dd5be885900e5ef14c3efa260277",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1.0",
+                "psr/simple-cache": "^3.0"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.13.8",
+                "nunomaduro/collision": "^7.10",
+                "pestphp/pest": "^v2.24.0",
+                "pestphp/pest-plugin-arch": "^2.6",
+                "pestphp/pest-plugin-mock": "^2.0.0",
+                "pestphp/pest-plugin-type-coverage": "^2.8",
+                "phpstan/phpstan": "^1.10.55",
+                "rector/rector": "^1.0.5",
+                "symfony/var-dumper": "^6.4.2"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/TailwindMerge.php"
+                ],
+                "psr-4": {
+                    "TailwindMerge\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sandro Gehri",
+                    "email": "sandrogehri@gmail.com"
+                }
+            ],
+            "description": "TailwindMerge for PHP merges multiple Tailwind CSS classes by automatically resolving conflicts between them",
+            "keywords": [
+                "classes",
+                "merge",
+                "php",
+                "tailwindcss"
+            ],
+            "support": {
+                "issues": "https://github.com/gehrisandro/tailwind-merge-php/issues",
+                "source": "https://github.com/gehrisandro/tailwind-merge-php/tree/v1.1.2"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/gehrisandro",
+                    "type": "github"
+                }
+            ],
+            "time": "2024-05-21T17:32:42+00:00"
+        },
+        {
             "name": "league/flysystem",
             "version": "3.29.1",
             "source": {
@@ -2284,6 +2351,57 @@
                 "source": "https://github.com/php-fig/log/tree/3.0.2"
             },
             "time": "2024-09-11T13:17:53+00:00"
+        },
+        {
+            "name": "psr/simple-cache",
+            "version": "3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/simple-cache.git",
+                "reference": "764e0b3939f5ca87cb904f570ef9be2d78a07865"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/simple-cache/zipball/764e0b3939f5ca87cb904f570ef9be2d78a07865",
+                "reference": "764e0b3939f5ca87cb904f570ef9be2d78a07865",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\SimpleCache\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interfaces for simple caching",
+            "keywords": [
+                "cache",
+                "caching",
+                "psr",
+                "psr-16",
+                "simple-cache"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/simple-cache/tree/3.0.0"
+            },
+            "time": "2021-10-29T13:26:27+00:00"
         },
         {
             "name": "symfony/asset",
@@ -5552,6 +5670,85 @@
             "time": "2024-09-09T11:45:10+00:00"
         },
         {
+            "name": "symfony/polyfill-uuid",
+            "version": "v1.31.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-uuid.git",
+                "reference": "21533be36c24be3f4b1669c4725c7d1d2bab4ae2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-uuid/zipball/21533be36c24be3f4b1669c4725c7d1d2bab4ae2",
+                "reference": "21533be36c24be3f4b1669c4725c7d1d2bab4ae2",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "provide": {
+                "ext-uuid": "*"
+            },
+            "suggest": {
+                "ext-uuid": "For best performance"
+            },
+            "type": "library",
+            "extra": {
+                "thanks": {
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Uuid\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Grégoire Pineau",
+                    "email": "lyrixx@lyrixx.info"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill for uuid functions",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "polyfill",
+                "portable",
+                "uuid"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-uuid/tree/v1.31.0"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2024-09-09T11:45:10+00:00"
+        },
+        {
             "name": "symfony/process",
             "version": "v7.2.0",
             "source": {
@@ -7124,6 +7321,80 @@
             "time": "2024-12-11T07:49:41+00:00"
         },
         {
+            "name": "symfony/uid",
+            "version": "v7.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/uid.git",
+                "reference": "2d294d0c48df244c71c105a169d0190bfb080426"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/uid/zipball/2d294d0c48df244c71c105a169d0190bfb080426",
+                "reference": "2d294d0c48df244c71c105a169d0190bfb080426",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.2",
+                "symfony/polyfill-uuid": "^1.15"
+            },
+            "require-dev": {
+                "symfony/console": "^6.4|^7.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Uid\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Grégoire Pineau",
+                    "email": "lyrixx@lyrixx.info"
+                },
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Provides an object-oriented API to generate and represent UIDs",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "UID",
+                "ulid",
+                "uuid"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/uid/tree/v7.2.0"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2024-09-25T14:21:43+00:00"
+        },
+        {
             "name": "symfony/ux-icons",
             "version": "v2.22.1",
             "source": {
@@ -7858,6 +8129,120 @@
                 "source": "https://github.com/SymfonyCasts/tailwind-bundle/tree/v0.6.1"
             },
             "time": "2024-11-06T18:41:22+00:00"
+        },
+        {
+            "name": "tales-from-a-dev/flowbite-bundle",
+            "version": "v0.7.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tales-from-a-dev/flowbite-bundle.git",
+                "reference": "cfc2fbebba6989f0d8b5cc00fdc95b7f3edabe2f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tales-from-a-dev/flowbite-bundle/zipball/cfc2fbebba6989f0d8b5cc00fdc95b7f3edabe2f",
+                "reference": "cfc2fbebba6989f0d8b5cc00fdc95b7f3edabe2f",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.2",
+                "symfony/http-kernel": "^6.4 || ^7.0",
+                "symfony/twig-bridge": "^6.4 || ^7.0",
+                "tales-from-a-dev/twig-tailwind-extra": "^0.3"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.15",
+                "phpunit/phpunit": "^10.0",
+                "symfony/form": "^6.4 || ^7.0",
+                "symfony/intl": "^6.4 || ^7.0",
+                "symfony/security-csrf": "^6.4 || ^7.0",
+                "symfony/translation": "^6.4 || ^7.0"
+            },
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "TalesFromADev\\FlowbiteBundle\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Romain Monteil",
+                    "email": "monteil.romain@gmail.com"
+                }
+            ],
+            "description": "A Symfony form theme for Flowbite",
+            "homepage": "https://github.com/tales-from-a-dev/flowbite-bundle",
+            "keywords": [
+                "bundle",
+                "flowbite",
+                "form",
+                "symfony",
+                "theme"
+            ],
+            "support": {
+                "issues": "https://github.com/tales-from-a-dev/flowbite-bundle/issues",
+                "source": "https://github.com/tales-from-a-dev/flowbite-bundle/tree/v0.7.1"
+            },
+            "time": "2024-12-11T13:52:04+00:00"
+        },
+        {
+            "name": "tales-from-a-dev/twig-tailwind-extra",
+            "version": "v0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tales-from-a-dev/twig-tailwind-extra.git",
+                "reference": "a3cb86414dd5810740cf91966bc1cf10047ce8ef"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tales-from-a-dev/twig-tailwind-extra/zipball/a3cb86414dd5810740cf91966bc1cf10047ce8ef",
+                "reference": "a3cb86414dd5810740cf91966bc1cf10047ce8ef",
+                "shasum": ""
+            },
+            "require": {
+                "gehrisandro/tailwind-merge-php": "^1.0",
+                "php": ">=8.2",
+                "symfony/cache": "^6.4 || ^7.0",
+                "symfony/framework-bundle": "^6.4 || ^7.0",
+                "twig/twig": "^3.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.38",
+                "symfony/phpunit-bridge": "^6.4 || ^7.0"
+            },
+            "type": "twig",
+            "autoload": {
+                "psr-4": {
+                    "TalesFromADev\\Twig\\Extra\\Tailwind\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Romain Monteil",
+                    "email": "monteil.romain@gmail.com"
+                }
+            ],
+            "description": "A Twig extension for Tailwind",
+            "homepage": "https://github.com/tales-from-a-dev/twig-tailwind-extra",
+            "keywords": [
+                "extension",
+                "symfony",
+                "tailwind",
+                "twig"
+            ],
+            "support": {
+                "issues": "https://github.com/tales-from-a-dev/twig-tailwind-extra/issues",
+                "source": "https://github.com/tales-from-a-dev/twig-tailwind-extra/tree/v0.3.0"
+            },
+            "time": "2024-08-07T23:27:08+00:00"
         },
         {
             "name": "twig/extra-bundle",
