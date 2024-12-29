@@ -11,15 +11,16 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[UniqueEntity(fields: ['email'], message: 'Un compte existe déjà avec cet email')]
-#[UniqueEntity(fields: ['username'], message: 'Un compte existe déjà avec ce nom d\'utilisateur')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', length: 180)]
-    private ?Uuid $id = null;
+    private ?Uuid $id;
+
+    #[ORM\Column(length: 255)]
+    private ?string $email = null;
 
     /**
      * @var list<string> The user roles
@@ -32,15 +33,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     private ?string $password = null;
-
-    #[ORM\Column(length: 255)]
-    private ?string $username = null;
-
-    #[ORM\Column(length: 255)]
-    private ?string $email = null;
-
-    #[ORM\Column]
-    private ?bool $approuved = false;
 
     public function __construct()
     {
@@ -110,18 +102,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // $this->plainPassword = null;
     }
 
-    public function getUsername(): ?string
-    {
-        return $this->username;
-    }
-
-    public function setUsername(string $username): static
-    {
-        $this->username = $username;
-
-        return $this;
-    }
-
     public function getEmail(): ?string
     {
         return $this->email;
@@ -130,18 +110,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
-
-        return $this;
-    }
-
-    public function isApprouved(): ?bool
-    {
-        return $this->approuved;
-    }
-
-    public function setApprouved(bool $approuved): static
-    {
-        $this->approuved = $approuved;
 
         return $this;
     }
