@@ -6,9 +6,11 @@
     <div class="container mx-auto px-16">
         <h1 class="text-center text-2xl font-bold mt-4">Liste des fichiers</h1>
         <div class="mt-4">
+            {{ include('partials/alerts.html.twig') }}
+        </div>
+        <div class="mt-4">
             {% include 'partials/breadbrumb.html.twig' %}
         </div>
-
 
         <div class="relative overflow-x-auto mt-4">
             <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -49,13 +51,11 @@
                         </td>
                         <td class="px-6 py-4 flex gap-2 light:text-black">
                             {% if file.type == 'file' %}
-                                <a href="#" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:eye" /></a>
-                                <a href="#" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:download" /></a>
-                                <a href="#" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:link" /></a>
+                                <a href="{{ file.url }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:download" /></a>
                                 <a href="#" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" /></a>
                                 <a href="#" class="hover:text-red-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
                                 {% else %}
-                                    <a href="#" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:link" /></a>
+                                    <a href="{{ file.url }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:link" /></a>
                                     <a href="#" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" /></a>
                                     <a href="#" class="hover:text-red-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
                             {% endif %}

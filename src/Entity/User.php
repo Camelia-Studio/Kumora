@@ -17,7 +17,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', length: 180)]
-    private ?Uuid $id;
+    private ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $email = null;
@@ -34,8 +34,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    public function __construct()
+
+    public function initId(): void
     {
+        if ($this->id !== null) {
+            return;
+        }
+
         $this->id = Uuid::v4();
     }
 

@@ -16,7 +16,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/files', 'app_files_')]
 #[IsGranted('ROLE_USER')]
-class DashboardController extends AbstractController
+class FilesController extends AbstractController
 {
     /**
      * @throws FilesystemException
@@ -62,7 +62,7 @@ class DashboardController extends AbstractController
             }
         });
 
-        return $this->render('dashboard/index.html.twig', [
+        return $this->render('files/index.html.twig', [
             'files' => $realFiles,
             'path' => $path,
         ]);
