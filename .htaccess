@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Rediriger les assets
+    RewriteCond %{REQUEST_URI} ^/kumora/assets/
+    RewriteRule ^kumora/assets/(.*)$ assets/$1 [L]
+
+    # Rediriger toutes les autres requêtes vers le dossier public
+    RewriteCond %{REQUEST_URI} !^/kumora/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

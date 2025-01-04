@@ -2,7 +2,8 @@ when@dev:
     web_profiler:
         toolbar: true
         intercept_redirects: false
-
+        excluded_ajax_paths: '^/((index|app(_[\w]+)?)\.php/)?(?!/kumora)(_(profiler|wdt)|css|images|js)/'
+        
     framework:
         profiler:
             only_exceptions: false
