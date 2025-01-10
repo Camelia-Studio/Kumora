@@ -1,0 +1,30 @@
+{% extends 'base-admin.html.twig' %}
+
+{% block body %}
+    <div class="container mx-auto px-16 mt-4">
+        <div class="block p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+            <h3 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                {% if not isNew %}
+                    Edition de l'utilisateur {{ user.email }}
+                {% else %}
+                    Création d'un nouvel utilisateur
+                {% endif %}
+            </h3>
+            <div class="mt-4">
+                {{ include('partials/alerts.html.twig') }}
+            </div>
+
+            {{ form(form) }}
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block title %}
+    {% if not isNew %}
+        Edition de l'utilisateur {{ user.email }}
+    {% else %}
+        Création d'un nouvel utilisateur
+    {% endif %}
+{% endblock %}
+

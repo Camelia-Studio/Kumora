@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fr" class="bg-white dark:bg-gray-800 dark:text-white">
+    <head>
+        <meta charset="UTF-8">
+        <title>Kumora - {% block title %}Accueil{% endblock %}</title>
+        <link rel="icon" href="{{ asset('images/favicon.ico') }}">
+        {% block stylesheets %}
+        {% endblock %}
+
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+    </head>
+    <body data-turbo="false">
+    {% include "partials/navbar.html.twig" %}
+        {% block body %}{% endblock %}
+    </body>
+</html>

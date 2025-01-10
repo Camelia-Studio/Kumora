@@ -1,0 +1,78 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":automergeDisabled",
+    ":dependencyDashboard",
+    ":disableRateLimiting",
+    "docker:pinDigests",
+    ":prConcurrentLimitNone"
+  ],
+  "reviewers": [
+    "@skitounet"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "\\.yaml$"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[^:]+?) depName=(?<depName>.+?)( versioning=(?<versioning>.+?))?( extractVersion=(?<extractVersion>.+?))?( registryUrl=(?<registryUrl>.+?))?\\s.+?[:=]\\s*[\"']?(?<currentValue>.+?)[\"']?\\s"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver-coerced{{/if}}",
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^v?(?<version>.+)${{/if}}"
+    }
+  ],
+  "ignorePaths": [
+    "public/**"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["composer"],
+      "matchDepTypes": ["require-dev"],
+      "addLabels": ["php-dev", "automerge"],
+      "groupName": "php-dev",
+      "automerge": true
+    },
+    {
+      "matchManagers": ["composer"],
+      "matchDepTypes": ["require"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "addLabels": ["php-mineur", "automerge"],
+      "groupName": "php-mineur",
+      "automerge": true
+    },
+    {
+      "matchManagers": ["composer"],
+      "matchDepTypes": ["require"],
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["php-majeur"],
+      "groupName": "php-majeur",
+      "automerge": false
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["devDependencies"],
+      "addLabels": ["node-dev", "automerge"],
+      "groupName": "node-dev",
+      "automerge": true
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "addLabels": ["node-mineur", "automerge"],
+      "groupName": "node-mineur",
+      "automerge": true
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["node-majeur"],
+      "groupName": "node-majeur",
+      "automerge": false
+    }
+  ]
+}
