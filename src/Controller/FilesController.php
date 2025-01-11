@@ -4,9 +4,11 @@ namespace App\Controller;
 
 use App\Form\CreateDirectoryType;
 use App\Form\RenameType;
+use App\Form\UploadType;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -108,7 +110,9 @@ class FilesController extends AbstractController
             $this->addFlash('error', 'Le fichier n\'existe pas.');
         }
 
-        return $this->redirectToRoute('app_files_index');
+        return $this->redirectToRoute('app_files_index', [
+            'path' => dirname($file),
+        ]);
     }
 
     /**
@@ -128,7 +132,9 @@ class FilesController extends AbstractController
             $this->addFlash('error', 'Le dossier n\'existe pas.');
         }
 
-        return $this->redirectToRoute('app_files_index');
+        return $this->redirectToRoute('app_files_index', [
+            'path' => dirname($path),
+        ]);
     }
 
     /**
@@ -248,6 +254,46 @@ class FilesController extends AbstractController
         ]);
     }
 
+    /**
+     * @throws FilesystemException
+     */
+    #[Route('/upload', name: 'upload')]
+    public function upload(#[MapQueryParameter('path')] string $path, Request $request, Filesystem $defaultAdapter): Response
+    {
+        $path = $this->normalizePath($path);
+
+        $form = $this->createForm(UploadType::class);
+
+        if ($path !== '' && !$defaultAdapter->directoryExists($path)) {
+            throw $this->createNotFoundException("Ce dossier n'existe pas !");
+        }
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data = $form->getData();
+            $files = $data['files'];
+
+            /**
+             * @var UploadedFile $file
+             */
+            foreach ($files as $file) {
+                $filename = $file->getClientOriginalName();
+                $defaultAdapter->write($path . '/' . $filename, $file->getContent());
+            }
+
+            $this->addFlash('success', 'Les ' . count($files) . ' fichiers ont bien été envoyés.');
+
+            return $this->redirectToRoute('app_files_index', [
+                'path' => $path,
+            ]);
+        }
+
+        return $this->render('files/upload.html.twig', [
+            'form' => $form->createView(),
+            'path' => $path,
+        ]);
+    }
 
     private function normalizePath(string $path): string
     {
