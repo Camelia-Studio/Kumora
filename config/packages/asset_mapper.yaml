@@ -4,7 +4,7 @@ framework:
         paths:
             - assets/
         missing_import_mode: strict
-        public_prefix: /kumora/assets
+        public_prefix: "%env(BASE_PREFIX)%/assets"
 
 when@prod:
     framework:

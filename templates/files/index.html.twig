@@ -53,11 +53,17 @@
                             {% if file.type == 'file' %}
                                 <a href="{{ file.url }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:download" /></a>
                                 <a href="#" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" /></a>
-                                <a href="#" class="hover:text-red-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
+                                <a href="{{
+                                    path('app_files_delete', {
+                                        filename: file.path
+                                    })
+                                }}" class="hover:text-red-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
                                 {% else %}
                                     <a href="{{ file.url }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:link" /></a>
                                     <a href="#" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" /></a>
-                                    <a href="#" class="hover:text-red-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
+                                    <a href="{{ path('app_files_delete_directory', {
+                                        path: file.path
+                                    }) }}" class="hover:text-red-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
                             {% endif %}
                         </td>
                     </tr>

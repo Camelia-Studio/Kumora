@@ -6,9 +6,12 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemReader;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
+use Symfony\Component\HttpKernel\Attribute\MapUploadedFile;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -24,16 +27,11 @@ class FilesController extends AbstractController
     #[Route('/', name: 'index')]
     public function index(Filesystem $defaultAdapter, UrlGeneratorInterface $urlGenerator, #[MapQueryParameter('path')] string $path = ''): Response
     {
-        // On retire les slashs en début et fin de chaîne
-        $path = trim($path, '/');
-        // On retire les chemins relatifs
-        $path = str_replace('..', '', $path);
-        $path = str_replace('//', '/', $path);
+        $path = $this->normalizePath($path);
 
         if ($path !== '' && !$defaultAdapter->directoryExists($path)) {
             throw $this->createNotFoundException("Ce dossier n'existe pas !");
         }
-
 
         $files = $defaultAdapter->listContents('/' . $path);
 
@@ -71,25 +69,75 @@ class FilesController extends AbstractController
     #[Route('/file-proxy', name: 'app_file_proxy')]
     public function fileProxy(Filesystem $defaultAdapter, #[MapQueryParameter('filename')]string $filename)
     {
-        $mimetype = $defaultAdapter->mimeType($filename);
+        $file = $this->normalizePath($filename);
+        $mimetype = $defaultAdapter->mimeType($file);
         if ($mimetype === '') {
             $mimetype = 'application/octet-stream';
         }
 
-        $response = new StreamedResponse(static function () use ($filename, $defaultAdapter): void {
+        $response = new StreamedResponse(static function () use ($file, $defaultAdapter): void {
             $outputStream = fopen('php://output', 'w');
-            $fileStream = $defaultAdapter->readStream($filename);
+            $fileStream = $defaultAdapter->readStream($file);
             stream_copy_to_stream($fileStream, $outputStream);
         });
 
         $response->headers->set('Content-Type', $mimetype);
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            basename($filename)
+            basename($file)
         );
         $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
+    }
 
+    /**
+     * @throws FilesystemException
+     */
+    #[Route('/file-delete', name: 'delete')]
+    public function fileDelete(Filesystem $defaultAdapter, #[MapQueryParameter('filename')] string $filename): RedirectResponse
+    {
+        $file = $this->normalizePath($filename);
+
+        if ($file !== '' && $defaultAdapter->fileExists($file)) {
+            $defaultAdapter->delete($file);
+
+            $this->addFlash('success', 'Le fichier a bien été supprimé.');
+        } else {
+            $this->addFlash('error', 'Le fichier n\'existe pas.');
+        }
+
+        return $this->redirectToRoute('app_files_index');
+    }
+
+    /**
+     * @throws FilesystemException
+     */
+    #[Route('/directory-delete', name: 'delete_directory')]
+    public function directoryDelete(Filesystem $defaultAdapter, #[MapQueryParameter('path')] string $path): RedirectResponse
+    {
+        $path = $this->normalizePath($path);
+
+
+        if ($path !== '' && $defaultAdapter->directoryExists($path)) {
+            $defaultAdapter->deleteDirectory($path);
+
+            $this->addFlash('success', 'Le dossier a bien été supprimé.');
+        } else {
+            $this->addFlash('error', 'Le dossier n\'existe pas.');
+        }
+
+        return $this->redirectToRoute('app_files_index');
+    }
+
+    private function normalizePath(string $path): string
+    {
+        // On retire les slashs en début et fin de chaîne
+        $path = trim($path, '/');
+        // On retire les chemins relatifs
+        $path = str_replace('..', '', $path);
+        $path = str_replace('//', '/', $path);
+
+        return $path;
     }
 }
