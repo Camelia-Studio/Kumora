@@ -2,19 +2,19 @@
 
 namespace App\Controller;
 
+use App\Form\CreateDirectoryType;
+use App\Form\RenameType;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
-use League\Flysystem\FilesystemReader;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
-use Symfony\Component\HttpKernel\Attribute\MapUploadedFile;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/files', 'app_files_')]
@@ -38,7 +38,8 @@ class FilesController extends AbstractController
         $realFiles = [];
         
         foreach ($files as $file) {
-            if (!str_starts_with($file['path'], '.')) {
+            $filename = basename($file['path']);
+            if (!str_starts_with($filename, '.')) {
                 $realFiles[] = [
                     'type' => $file['type'],
                     'path' => $file['path'],
@@ -46,7 +47,7 @@ class FilesController extends AbstractController
                     'size' => $file['fileSize'] ?? null,
                     'url' => $file['type'] === 'file'
                         ?  $this->generateUrl('app_files_app_file_proxy', ['filename' => $file['path']], UrlGeneratorInterface::ABSOLUTE_URL)
-                        :  $this->generateUrl('app_files_index', ['path' => $path . '/' . $file['path']]),
+                        :  $this->generateUrl('app_files_index', ['path' => $file['path']]),
                 ];
             }
         }
@@ -99,7 +100,7 @@ class FilesController extends AbstractController
     {
         $file = $this->normalizePath($filename);
 
-        if ($file !== '' && $defaultAdapter->fileExists($file)) {
+        if ($file !== '' && !str_starts_with($file, '.') && $defaultAdapter->fileExists($file)) {
             $defaultAdapter->delete($file);
 
             $this->addFlash('success', 'Le fichier a bien été supprimé.');
@@ -119,7 +120,7 @@ class FilesController extends AbstractController
         $path = $this->normalizePath($path);
 
 
-        if ($path !== '' && $defaultAdapter->directoryExists($path)) {
+        if ($path !== '' && !str_starts_with($path, '.') && $defaultAdapter->directoryExists($path)) {
             $defaultAdapter->deleteDirectory($path);
 
             $this->addFlash('success', 'Le dossier a bien été supprimé.');
@@ -129,6 +130,124 @@ class FilesController extends AbstractController
 
         return $this->redirectToRoute('app_files_index');
     }
+
+    /**
+     * @throws FilesystemException
+     */
+    #[Route('/rename', name: 'rename')]
+    public function rename(#[MapQueryParameter('path')] string $filepath, Request $request, Filesystem $defaultAdapter): Response
+    {
+        $filepath = $this->normalizePath($filepath);
+
+        if ($filepath === '' || str_starts_with($filepath, '.') || !$defaultAdapter->fileExists($filepath)) {
+            throw $this->createNotFoundException("Ce fichier n'existe pas !");
+        }
+
+        $data = [
+            'newName' => pathinfo($filepath, PATHINFO_BASENAME),
+        ];
+        $form = $this->createForm(RenameType::class, $data);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data = $form->getData();
+
+            $newName = $data['newName'];
+
+            $newPath = dirname($filepath) . '/' . $newName;
+
+            $defaultAdapter->move($filepath, $newPath);
+
+            $this->addFlash('success', 'Le fichier a bien été renommé.');
+
+            return $this->redirectToRoute('app_files_index', [
+                'path' => dirname($filepath),
+            ]);
+        }
+
+        return $this->render('files/rename.html.twig', [
+            'form' => $form->createView(),
+            'filepath' => $filepath,
+            'type' => 'fichier',
+        ]);
+    }
+
+    /**
+     * @throws FilesystemException
+     */
+    #[Route('/create-directory', name: 'create_directory')]
+    public function createDirectory(Request $request, Filesystem $defaultAdapter, #[MapQueryParameter('base')] string $basePath): Response
+    {
+        $basePath = $this->normalizePath($basePath);
+        $form = $this->createForm(CreateDirectoryType::class);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data = $form->getData();
+
+            $name = $data['name'];
+
+            $defaultAdapter->createDirectory($basePath . '/' . $name);
+
+            $defaultAdapter->write($basePath . '/' . $name . '/.gitkeep', '');
+
+            $this->addFlash('success', 'Le dossier a bien été créé.');
+
+            return $this->redirectToRoute('app_files_index', [
+                'path' => $basePath,
+            ]);
+        }
+
+        return $this->render('files/create_directory.html.twig', [
+            'form' => $form->createView(),
+            'basePath' => $basePath,
+        ]);
+    }
+
+    /**
+     * @throws FilesystemException
+     */
+    #[Route('/rename-directory', name: 'rename-directory')]
+    public function renameDirectory(#[MapQueryParameter('path')] string $filepath, Request $request, Filesystem $defaultAdapter): Response
+    {
+        $filepath = $this->normalizePath($filepath);
+
+        if ($filepath === '' || str_starts_with($filepath, '.') || !$defaultAdapter->directoryExists($filepath)) {
+            throw $this->createNotFoundException("Ce dossier n'existe pas !");
+        }
+
+        $data = [
+            'newName' => pathinfo($filepath, PATHINFO_BASENAME),
+        ];
+        $form = $this->createForm(RenameType::class, $data);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data = $form->getData();
+
+            $newName = $data['newName'];
+
+            $newPath = dirname($filepath) . '/' . $newName;
+
+            $defaultAdapter->move($filepath, $newPath);
+
+            $this->addFlash('success', 'Le dossier a bien été renommé.');
+
+            return $this->redirectToRoute('app_files_index', [
+                'path' => dirname($filepath),
+            ]);
+        }
+
+        return $this->render('files/rename.html.twig', [
+            'form' => $form->createView(),
+            'filepath' => $filepath,
+            'type' => 'dossier',
+        ]);
+    }
+
 
     private function normalizePath(string $path): string
     {
