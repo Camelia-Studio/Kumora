@@ -6,5 +6,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Setup PHP with pre-release PECL extension
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+    - name: Download Composer
+      run: php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && php composer-setup.php && php -r "unlink('composer-setup.php');"
+    - name: Install Dependencies
+      run: php composer.phar install
     - name: Run Rector
       run: vendor/bin/rector --dry-run
