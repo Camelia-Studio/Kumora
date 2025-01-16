@@ -39,7 +39,7 @@ class CreateUserCommand extends Command
 
         try {
             $user = $this->userRepository->findOneBy(['email' => $email]);
-            if ($user !== null) {
+            if (null !== $user) {
                 $io->error('Un utilisateur existe déjà avec cet email');
                 return Command::FAILURE;
             }
