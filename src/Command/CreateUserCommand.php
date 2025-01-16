@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Command;
 
 use App\Entity\User;
@@ -24,8 +26,7 @@ class CreateUserCommand extends Command
         private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly EntityManagerInterface $entityManager,
         private readonly UserRepository $userRepository
-    )
-    {
+    ) {
         parent::__construct();
     }
 
@@ -56,7 +57,6 @@ class CreateUserCommand extends Command
         } catch (\Exception $e) {
             $io->error('Une erreur est survenue lors de la création de l\'utilisateur');
         }
-
 
         return Command::SUCCESS;
     }

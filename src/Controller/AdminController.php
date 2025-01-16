@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Entity\User;
@@ -39,7 +41,6 @@ class AdminController extends AbstractController
             'users' => $users,
         ]);
     }
-
 
     #[Route('/users/create', name: 'user_create')]
     #[Route('/users/edit/{user}', name: 'user_edit')]

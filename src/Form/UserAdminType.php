@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Form;
 
 use App\Entity\User;
@@ -44,7 +46,6 @@ class UserAdminType extends AbstractType
         $builder->add('submit', SubmitType::class, [
             'label' => 'Enregistrer',
         ]);
-
     }
 
     public function configureOptions(OptionsResolver $resolver): void

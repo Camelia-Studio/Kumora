@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Form\CreateDirectoryType;
@@ -31,14 +33,14 @@ class FilesController extends AbstractController
     {
         $path = $this->normalizePath($path);
 
-        if ($path !== '' && !$defaultAdapter->directoryExists($path)) {
+        if ('' !== $path && !$defaultAdapter->directoryExists($path)) {
             throw $this->createNotFoundException("Ce dossier n'existe pas !");
         }
 
         $files = $defaultAdapter->listContents('/' . $path);
 
         $realFiles = [];
-        
+
         foreach ($files as $file) {
             $filename = basename($file['path']);
             if (!str_starts_with($filename, '.')) {
@@ -47,9 +49,9 @@ class FilesController extends AbstractController
                     'path' => $file['path'],
                     'last_modified' => $file['lastModified'],
                     'size' => $file['fileSize'] ?? null,
-                    'url' => $file['type'] === 'file'
-                        ?  $this->generateUrl('app_files_app_file_proxy', ['filename' => $file['path']], UrlGeneratorInterface::ABSOLUTE_URL)
-                        :  $this->generateUrl('app_files_index', ['path' => $file['path']]),
+                    'url' => 'file' === $file['type']
+                        ? $this->generateUrl('app_files_app_file_proxy', ['filename' => $file['path']], UrlGeneratorInterface::ABSOLUTE_URL)
+                        : $this->generateUrl('app_files_index', ['path' => $file['path']]),
                 ];
             }
         }
@@ -58,9 +60,8 @@ class FilesController extends AbstractController
         usort($realFiles, static function ($a, $b) {
             if ($a['type'] === $b['type']) {
                 return $a['path'] <=> $b['path'];
-            } else {
-                return $a['type'] <=> $b['type'];
             }
+            return $a['type'] <=> $b['type'];
         });
 
         return $this->render('files/index.html.twig', [
@@ -70,11 +71,11 @@ class FilesController extends AbstractController
     }
 
     #[Route('/file-proxy', name: 'app_file_proxy')]
-    public function fileProxy(Filesystem $defaultAdapter, #[MapQueryParameter('filename')]string $filename)
+    public function fileProxy(Filesystem $defaultAdapter, #[MapQueryParameter('filename')] string $filename)
     {
         $file = $this->normalizePath($filename);
         $mimetype = $defaultAdapter->mimeType($file);
-        if ($mimetype === '') {
+        if ('' === $mimetype) {
             $mimetype = 'application/octet-stream';
         }
 
@@ -102,7 +103,7 @@ class FilesController extends AbstractController
     {
         $file = $this->normalizePath($filename);
 
-        if ($file !== '' && !str_starts_with($file, '.') && $defaultAdapter->fileExists($file)) {
+        if ('' !== $file && !str_starts_with($file, '.') && $defaultAdapter->fileExists($file)) {
             $defaultAdapter->delete($file);
 
             $this->addFlash('success', 'Le fichier a bien été supprimé.');
@@ -123,8 +124,7 @@ class FilesController extends AbstractController
     {
         $path = $this->normalizePath($path);
 
-
-        if ($path !== '' && !str_starts_with($path, '.') && $defaultAdapter->directoryExists($path)) {
+        if ('' !== $path && !str_starts_with($path, '.') && $defaultAdapter->directoryExists($path)) {
             $defaultAdapter->deleteDirectory($path);
 
             $this->addFlash('success', 'Le dossier a bien été supprimé.');
@@ -145,7 +145,7 @@ class FilesController extends AbstractController
     {
         $filepath = $this->normalizePath($filepath);
 
-        if ($filepath === '' || str_starts_with($filepath, '.') || !$defaultAdapter->fileExists($filepath)) {
+        if ('' === $filepath || str_starts_with($filepath, '.') || !$defaultAdapter->fileExists($filepath)) {
             throw $this->createNotFoundException("Ce fichier n'existe pas !");
         }
 
@@ -220,7 +220,7 @@ class FilesController extends AbstractController
     {
         $filepath = $this->normalizePath($filepath);
 
-        if ($filepath === '' || str_starts_with($filepath, '.') || !$defaultAdapter->directoryExists($filepath)) {
+        if ('' === $filepath || str_starts_with($filepath, '.') || !$defaultAdapter->directoryExists($filepath)) {
             throw $this->createNotFoundException("Ce dossier n'existe pas !");
         }
 
@@ -264,7 +264,7 @@ class FilesController extends AbstractController
 
         $form = $this->createForm(UploadType::class);
 
-        if ($path !== '' && !$defaultAdapter->directoryExists($path)) {
+        if ('' !== $path && !$defaultAdapter->directoryExists($path)) {
             throw $this->createNotFoundException("Ce dossier n'existe pas !");
         }
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Twig\Runtime;
 
 use Twig\Extension\RuntimeExtensionInterface;
@@ -17,6 +19,6 @@ class SizeExtensionRuntime implements RuntimeExtensionInterface
         $size = ['B', 'KB', 'MB', 'GB','TB'];
         $factor = floor((strlen($bytes) - 1) / 3);
 
-        return sprintf('%.1f', $bytes / pow(1024, $factor)) . ' ' . @$size[$factor];
+        return sprintf('%.1f', $bytes / 1024 ** $factor) . ' ' . @$size[$factor];
     }
 }
