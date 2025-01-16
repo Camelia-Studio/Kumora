@@ -10,6 +10,6 @@ class BasenameExtensionRuntime implements RuntimeExtensionInterface
 {
     public function basename($value)
     {
-        return \basename($value);
+        return \basename((string) $value);
     }
 }

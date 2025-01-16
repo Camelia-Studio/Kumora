@@ -38,7 +38,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function initId(): void
     {
-        if (null !== $this->id) {
+        if ($this->id instanceof \Symfony\Component\Uid\Uuid) {
             return;
         }
 

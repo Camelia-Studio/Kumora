@@ -47,7 +47,7 @@ class AdminController extends AbstractController
     public function editUsers(#[MapEntity(id: 'user')] ?User $user, Request $request): Response
     {
         $isNew = false;
-        if (!$user) {
+        if (!$user instanceof \App\Entity\User) {
             $user = new User();
             $isNew = true;
         }

@@ -42,7 +42,7 @@ class FilesController extends AbstractController
         $realFiles = [];
 
         foreach ($files as $file) {
-            $filename = basename($file['path']);
+            $filename = basename((string) $file['path']);
             if (!str_starts_with($filename, '.')) {
                 $realFiles[] = [
                     'type' => $file['type'],
@@ -301,8 +301,7 @@ class FilesController extends AbstractController
         $path = trim($path, '/');
         // On retire les chemins relatifs
         $path = str_replace('..', '', $path);
-        $path = str_replace('//', '/', $path);
 
-        return $path;
+        return str_replace('//', '/', $path);
     }
 }

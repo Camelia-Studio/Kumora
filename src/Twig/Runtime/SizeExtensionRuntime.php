@@ -17,7 +17,7 @@ class SizeExtensionRuntime implements RuntimeExtensionInterface
     {
         $bytes = $value;
         $size = ['B', 'KB', 'MB', 'GB','TB'];
-        $factor = floor((strlen($bytes) - 1) / 3);
+        $factor = floor((strlen((string) $bytes) - 1) / 3);
 
         return sprintf('%.1f', $bytes / 1024 ** $factor) . ' ' . @$size[$factor];
     }

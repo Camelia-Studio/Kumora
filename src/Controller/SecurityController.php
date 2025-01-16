@@ -12,7 +12,7 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
-    public function __construct(private readonly UrlGeneratorInterface $urlGenerator)
+    public function __construct()
     {
     }
 
