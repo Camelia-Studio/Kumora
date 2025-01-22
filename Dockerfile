@@ -1,4 +1,4 @@
-FROM dunglas/frankenphp@sha256:455232397cc29d3dd8f872b38e07711b9ccd4adb7f6ee2c518bffa6dc84fb05a
+FROM dunglas/frankenphp@sha256:18a14f07c085a83e0c7d6c833f64d8733a78e656c0f2911400f9c6bc99ac3fd0
 
 ENV SERVER_NAME=":80"
 
