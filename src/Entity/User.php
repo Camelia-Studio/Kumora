@@ -41,6 +41,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(enumType: RoleEnum::class)]
     private ?RoleEnum $folder_role = null;
 
+    #[ORM\Column(length: 255)]
+    private ?string $fullname = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -124,6 +127,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setFolderRole(RoleEnum $folder_role): static
     {
         $this->folder_role = $folder_role;
+
+        return $this;
+    }
+
+    public function getFullname(): ?string
+    {
+        return $this->fullname;
+    }
+
+    public function setFullname(string $fullname): static
+    {
+        $this->fullname = $fullname;
 
         return $this;
     }

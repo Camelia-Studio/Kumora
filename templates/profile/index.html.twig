@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Le cloud de Camélia-Studio{% endblock %}
+
+{% block body %}
+    <div class="container mx-auto px-16">
+            <div class="grid grid-cols-4 gap-8 mt-4">
+                <div class="border border-gray-500 rounded-lg">
+                    <div class="p-4">
+                        <img src="{{ get_gravatar('toto@titi.fr') }}" alt="Avatar de l'utilisateur" class="rounded-lg">
+                    </div>
+                    <div class="flex justify-center pb-2">
+                        {{ user.fullname }}
+                    </div>
+                    <div class="border-t border-gray-500 py-2 pl-2">
+                        <span class="font-bold">
+                            Email :
+                        </span> {{ user.email }}
+                    </div>
+                    <div class="border-t border-gray-500 py-2 pl-2">
+                        <span class="font-bold">
+                            Rôle :
+                        </span> {{ user.roles[0] == 'ROLE_ADMIN' ? 'Administrateur' : 'Utilisateur' }}
+                    </div>
+                    <div class="border-t border-gray-500 py-2 pl-2">
+                        <span class="font-bold">
+                            Rôle de dossier :
+                        </span> {{ user.folderRole.value }}
+                    </div>
+                </div>
+
+            </div>
+    </div>
+
+{% endblock %}

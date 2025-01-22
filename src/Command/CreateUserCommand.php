@@ -34,6 +34,7 @@ class CreateUserCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+        $fullname = $io->ask('Nom de l\'utilisateur');
         $email = $io->ask('Email de l\'utilisateur');
         $password = $io->askHidden('Mot de passe de l\'utilisateur');
         $isAdmin = $io->confirm('Est-ce un administrateur ?');
@@ -46,6 +47,7 @@ class CreateUserCommand extends Command
                 return Command::FAILURE;
             }
             $user = new User();
+            $user->setFullname($fullname);
             $user->setEmail($email);
             $user->setPassword($this->passwordHasher->hashPassword($user, $password));
             $user->setRoles($isAdmin ? ['ROLE_ADMIN'] : ['ROLE_USER']);
