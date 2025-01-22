@@ -68,7 +68,7 @@ class FilesController extends AbstractController
             $filename = basename((string) $file['path']);
             if (!str_starts_with($filename, '.')) {
                 // On vérifie si l'utilisateur a le droit d'accéder au fichier (vérifier que owner_role du parentDirectory correspondant est bien le folderRole de l'utilisateur)
-                $pathFile = explode('/', $file['path']);
+                $pathFile = explode('/', (string) $file['path']);
                 if ('' !== $path) {
                     $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $pathFile[0]]);
 
@@ -313,8 +313,8 @@ class FilesController extends AbstractController
 
             $name = $data['name'];
 
-            if (explode('/', $name) > 1) {
-                $name = explode('/', $name)[0];
+            if (count(explode('/', (string) $name)) > 1) {
+                $name = explode('/', (string) $name)[0];
             }
 
             if ($defaultAdapter->directoryExists($basePath . '/' . $name)) {

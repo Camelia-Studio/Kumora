@@ -11,6 +11,9 @@ parameters:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
     strictRules:
         noVariableVariables: false
+    ignoreErrors:
+        -
+            identifier: property.unusedType
 
 
     reportUnmatchedIgnoredErrors: false
