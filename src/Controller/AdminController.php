@@ -59,7 +59,6 @@ class AdminController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $role = $form->get('role')->getData();
             $user->setRoles([$role]);
-            $user->initId();
 
             if ($form->has('plainPassword')) {
                 $plainPassword = $form->get('plainPassword')->getData();

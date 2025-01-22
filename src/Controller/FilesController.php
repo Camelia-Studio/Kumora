@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\ParentDirectory;
+use App\Entity\User;
+use App\Enum\RoleEnum;
 use App\Form\CreateDirectoryType;
 use App\Form\RenameType;
 use App\Form\UploadType;
+use App\Repository\ParentDirectoryRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,19 +27,37 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/files', 'app_files_')]
-#[IsGranted('ROLE_USER')]
 class FilesController extends AbstractController
 {
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ParentDirectoryRepository $parentDirectoryRepository
+    ) {
+    }
+
     /**
      * @throws FilesystemException
      */
     #[Route('/', name: 'index')]
+    #[IsGranted('ROLE_USER')]
     public function index(Filesystem $defaultAdapter, UrlGeneratorInterface $urlGenerator, #[MapQueryParameter('path')] string $path = ''): Response
     {
         $path = $this->normalizePath($path);
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
 
-        if ('' !== $path && !$defaultAdapter->directoryExists($path)) {
-            throw $this->createNotFoundException("Ce dossier n'existe pas !");
+        if ('' !== $path) {
+            $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $path]);
+
+            if (null === $parentDir || !$defaultAdapter->directoryExists($path)) {
+                throw $this->createNotFoundException("Ce dossier n'existe pas !");
+            }
+
+            if ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true)) {
+                throw $this->createNotFoundException("Vous n'avez pas le droit d'accéder à ce dossier !");
+            }
         }
 
         $files = $defaultAdapter->listContents('/' . $path);
@@ -44,6 +67,22 @@ class FilesController extends AbstractController
         foreach ($files as $file) {
             $filename = basename((string) $file['path']);
             if (!str_starts_with($filename, '.')) {
+                // On vérifie si l'utilisateur a le droit d'accéder au fichier (vérifier que owner_role du parentDirectory correspondant est bien le folderRole de l'utilisateur)
+                $pathFile = explode('/', $file['path']);
+                if ('' !== $path) {
+                    $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $pathFile[0]]);
+
+                    if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+                        continue;
+                    }
+                } elseif ('file' !== $file['type']) {
+                    $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $filename]);
+
+                    if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+                        continue;
+                    }
+                }
+
                 $realFiles[] = [
                     'type' => $file['type'],
                     'path' => $file['path'],
@@ -70,10 +109,34 @@ class FilesController extends AbstractController
         ]);
     }
 
+    /**
+     * @throws FilesystemException
+     */
     #[Route('/file-proxy', name: 'app_file_proxy')]
     public function fileProxy(Filesystem $defaultAdapter, #[MapQueryParameter('filename')] string $filename)
     {
         $file = $this->normalizePath($filename);
+
+        $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => explode('/', $file)[0]]);
+
+        if (null === $parentDir) {
+            throw $this->createNotFoundException("Vous n'avez pas le droit d'accéder à ce fichier !");
+        }
+
+        // Si l'owner role sur le parent est visiteur, on peut accéder au fichier sans être connecté
+        if (RoleEnum::VISITEUR !== $parentDir->getOwnerRole()) {
+            $this->denyAccessUnlessGranted('ROLE_USER');
+
+            /**
+             * @var User $user
+             */
+            $user = $this->getUser();
+
+            if ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true)) {
+                throw $this->createNotFoundException("Vous n'avez pas le droit d'accéder à ce fichier !");
+            }
+        }
+
         $mimetype = $defaultAdapter->mimeType($file);
         if ('' === $mimetype) {
             $mimetype = 'application/octet-stream';
@@ -99,9 +162,24 @@ class FilesController extends AbstractController
      * @throws FilesystemException
      */
     #[Route('/file-delete', name: 'delete')]
+    #[IsGranted('ROLE_USER')]
     public function fileDelete(Filesystem $defaultAdapter, #[MapQueryParameter('filename')] string $filename): RedirectResponse
     {
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
         $file = $this->normalizePath($filename);
+
+        $realPath = explode('/', $file);
+
+        if (count($realPath) > 1) {
+            $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
+
+            if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+                throw $this->createNotFoundException("Vous n'avez pas le droit de supprimer ce fichier !");
+            }
+        }
 
         if ('' !== $file && !str_starts_with($file, '.') && $defaultAdapter->fileExists($file)) {
             $defaultAdapter->delete($file);
@@ -120,9 +198,21 @@ class FilesController extends AbstractController
      * @throws FilesystemException
      */
     #[Route('/directory-delete', name: 'delete_directory')]
+    #[IsGranted('ROLE_USER')]
     public function directoryDelete(Filesystem $defaultAdapter, #[MapQueryParameter('path')] string $path): RedirectResponse
     {
         $path = $this->normalizePath($path);
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
+
+        $realPath = explode('/', $path);
+        $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
+
+        if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+            throw $this->createNotFoundException("Vous n'avez pas le droit de supprimer ce dossier !");
+        }
 
         if ('' !== $path && !str_starts_with($path, '.') && $defaultAdapter->directoryExists($path)) {
             $defaultAdapter->deleteDirectory($path);
@@ -141,12 +231,27 @@ class FilesController extends AbstractController
      * @throws FilesystemException
      */
     #[Route('/rename', name: 'rename')]
+    #[IsGranted('ROLE_USER')]
     public function rename(#[MapQueryParameter('path')] string $filepath, Request $request, Filesystem $defaultAdapter): Response
     {
         $filepath = $this->normalizePath($filepath);
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
 
         if ('' === $filepath || str_starts_with($filepath, '.') || !$defaultAdapter->fileExists($filepath)) {
             throw $this->createNotFoundException("Ce fichier n'existe pas !");
+        }
+
+        $realPath = explode('/', $filepath);
+
+        if (count($realPath) > 1) {
+            $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
+
+            if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+                throw $this->createNotFoundException("Vous n'avez pas le droit de renommer ce fichier !");
+            }
         }
 
         $data = [
@@ -183,9 +288,22 @@ class FilesController extends AbstractController
      * @throws FilesystemException
      */
     #[Route('/create-directory', name: 'create_directory')]
+    #[IsGranted('ROLE_USER')]
     public function createDirectory(Request $request, Filesystem $defaultAdapter, #[MapQueryParameter('base')] string $basePath): Response
     {
         $basePath = $this->normalizePath($basePath);
+        $realPath = explode('/', $basePath);
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
+
+        if (count($realPath) > 1) {
+            $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
+            if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+                throw $this->createNotFoundException("Vous n'avez pas le droit de créer de sous-dossier dans ce dossier !");
+            }
+        }
         $form = $this->createForm(CreateDirectoryType::class);
 
         $form->handleRequest($request);
@@ -195,9 +313,35 @@ class FilesController extends AbstractController
 
             $name = $data['name'];
 
+            if (explode('/', $name) > 1) {
+                $name = explode('/', $name)[0];
+            }
+
+            if ($defaultAdapter->directoryExists($basePath . '/' . $name)) {
+                $this->addFlash('error', 'Le dossier existe déjà.');
+
+                return $this->redirectToRoute('app_files_index', [
+                    'path' => $basePath,
+                ]);
+            }
+
             $defaultAdapter->createDirectory($basePath . '/' . $name);
 
             $defaultAdapter->write($basePath . '/' . $name . '/.gitkeep', '');
+
+            // si basePath est vide, on crée un parentDirectory
+            if ('' === $basePath) {
+                /**
+                 * @var User $user
+                 */
+                $user = $this->getUser();
+                $parentDirectory = new ParentDirectory();
+                $parentDirectory->setName($name);
+                $parentDirectory->setOwnerRole($user->getFolderRole());
+
+                $this->entityManager->persist($parentDirectory);
+                $this->entityManager->flush();
+            }
 
             $this->addFlash('success', 'Le dossier a bien été créé.');
 
@@ -216,9 +360,21 @@ class FilesController extends AbstractController
      * @throws FilesystemException
      */
     #[Route('/rename-directory', name: 'rename-directory')]
+    #[IsGranted('ROLE_USER')]
     public function renameDirectory(#[MapQueryParameter('path')] string $filepath, Request $request, Filesystem $defaultAdapter): Response
     {
         $filepath = $this->normalizePath($filepath);
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
+
+        $realPath = explode('/', $filepath);
+        $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
+
+        if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+            throw $this->createNotFoundException("Vous n'avez pas le droit de renommer ce dossier !");
+        }
 
         if ('' === $filepath || str_starts_with($filepath, '.') || !$defaultAdapter->directoryExists($filepath)) {
             throw $this->createNotFoundException("Ce dossier n'existe pas !");
@@ -258,13 +414,30 @@ class FilesController extends AbstractController
      * @throws FilesystemException
      */
     #[Route('/upload', name: 'upload')]
+    #[IsGranted('ROLE_USER')]
     public function upload(#[MapQueryParameter('path')] string $path, Request $request, Filesystem $defaultAdapter): Response
     {
         $path = $this->normalizePath($path);
 
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
+
+        if ('' === $path) {
+            throw $this->createNotFoundException("Vous ne pouvez pas uploader de fichier à la racine !");
+        }
+
+        $realPath = explode('/', $path);
+        $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
+
+        if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+            throw $this->createNotFoundException("Vous n'avez pas le droit d'uploader des fichiers dans ce dossier !");
+        }
+
         $form = $this->createForm(UploadType::class);
 
-        if ('' !== $path && !$defaultAdapter->directoryExists($path)) {
+        if (!$defaultAdapter->directoryExists($path)) {
             throw $this->createNotFoundException("Ce dossier n'existe pas !");
         }
 

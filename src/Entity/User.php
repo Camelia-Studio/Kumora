@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\RoleEnum;
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -18,8 +19,9 @@ use Symfony\Component\Uid\Uuid;
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
-    #[ORM\Column(type: 'uuid', length: 180)]
-    private ?Uuid $id = null;
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $email = null;
@@ -36,16 +38,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    public function initId(): void
-    {
-        if ($this->id instanceof \Symfony\Component\Uid\Uuid) {
-            return;
-        }
+    #[ORM\Column(enumType: RoleEnum::class)]
+    private ?RoleEnum $folder_role = null;
 
-        $this->id = Uuid::v4();
-    }
-
-    public function getId(): ?Uuid
+    /**
+     * @return int|null
+     */
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -116,6 +115,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    public function getFolderRole(): ?RoleEnum
+    {
+        return $this->folder_role;
+    }
+
+    public function setFolderRole(RoleEnum $folder_role): static
+    {
+        $this->folder_role = $folder_role;
 
         return $this;
     }
