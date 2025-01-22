@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b314b1196a7bff886223cef5444d3df6",
+    "content-hash": "d58d5009e09974e2358412fe10fa1005",
     "packages": [
         {
             "name": "composer/semver",
@@ -1724,16 +1724,16 @@
         },
         {
             "name": "oneup/flysystem-bundle",
-            "version": "4.12.3",
+            "version": "4.12.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/1up-lab/OneupFlysystemBundle.git",
-                "reference": "23d7186524a9c6236662c452891b1175cb193777"
+                "reference": "b5f0caa9ee098e878158a46e48cfdc81bcb8bcf9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/1up-lab/OneupFlysystemBundle/zipball/23d7186524a9c6236662c452891b1175cb193777",
-                "reference": "23d7186524a9c6236662c452891b1175cb193777",
+                "url": "https://api.github.com/repos/1up-lab/OneupFlysystemBundle/zipball/b5f0caa9ee098e878158a46e48cfdc81bcb8bcf9",
+                "reference": "b5f0caa9ee098e878158a46e48cfdc81bcb8bcf9",
                 "shasum": ""
             },
             "require": {
@@ -1807,9 +1807,9 @@
             ],
             "support": {
                 "issues": "https://github.com/1up-lab/OneupFlysystemBundle/issues",
-                "source": "https://github.com/1up-lab/OneupFlysystemBundle/tree/4.12.3"
+                "source": "https://github.com/1up-lab/OneupFlysystemBundle/tree/4.12.4"
             },
-            "time": "2024-10-15T06:27:06+00:00"
+            "time": "2024-10-15T06:48:15+00:00"
         },
         {
             "name": "phpdocumentor/reflection-common",
