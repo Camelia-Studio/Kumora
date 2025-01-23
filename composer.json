@@ -51,7 +51,7 @@
         "symfony/web-link": "7.2.*",
         "symfony/yaml": "7.2.*",
         "symfonycasts/reset-password-bundle": "^1.23.1",
-        "symfonycasts/tailwind-bundle": "^0.6.1",
+        "symfonycasts/tailwind-bundle": "^0.7.0",
         "tales-from-a-dev/flowbite-bundle": "^0.7.1",
         "twig/extra-bundle": "^2.12|^3.18",
         "twig/twig": "^2.12|^3.18"
