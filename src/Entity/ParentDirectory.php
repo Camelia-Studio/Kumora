@@ -22,6 +22,13 @@ class ParentDirectory
     #[ORM\Column(enumType: RoleEnum::class)]
     private ?RoleEnum $ownerRole = null;
 
+    #[ORM\ManyToOne(inversedBy: 'parentDirectories')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $userCreated = null;
+
+    #[ORM\Column]
+    private ?bool $isPublic = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -47,6 +54,30 @@ class ParentDirectory
     public function setOwnerRole(RoleEnum $ownerRole): static
     {
         $this->ownerRole = $ownerRole;
+
+        return $this;
+    }
+
+    public function getUserCreated(): ?User
+    {
+        return $this->userCreated;
+    }
+
+    public function setUserCreated(?User $userCreated): static
+    {
+        $this->userCreated = $userCreated;
+
+        return $this;
+    }
+
+    public function isPublic(): ?bool
+    {
+        return $this->isPublic;
+    }
+
+    public function setIsPublic(bool $isPublic): static
+    {
+        $this->isPublic = $isPublic;
 
         return $this;
     }

@@ -55,7 +55,9 @@ class FilesController extends AbstractController
                 throw $this->createNotFoundException("Ce dossier n'existe pas !");
             }
 
-            if ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true)) {
+
+
+            if (!$this->isGranted('file', $parentDir)) {
                 throw $this->createNotFoundException("Vous n'avez pas le droit d'accéder à ce dossier !");
             }
         }
@@ -72,13 +74,13 @@ class FilesController extends AbstractController
                 if ('' !== $path) {
                     $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $pathFile[0]]);
 
-                    if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+                    if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
                         continue;
                     }
                 } elseif ('file' !== $file['type']) {
                     $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $filename]);
 
-                    if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+                    if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
                         continue;
                     }
                 }
@@ -132,7 +134,7 @@ class FilesController extends AbstractController
              */
             $user = $this->getUser();
 
-            if ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true)) {
+            if (!$this->isGranted('file', $parentDir)) {
                 throw $this->createNotFoundException("Vous n'avez pas le droit d'accéder à ce fichier !");
             }
         }
@@ -176,7 +178,7 @@ class FilesController extends AbstractController
         if (count($realPath) > 1) {
             $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
-            if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+            if (null === $parentDir  || !$this->isGranted('file', $parentDir)) {
                 throw $this->createNotFoundException("Vous n'avez pas le droit de supprimer ce fichier !");
             }
         }
@@ -210,7 +212,7 @@ class FilesController extends AbstractController
         $realPath = explode('/', $path);
         $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
-        if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+        if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
             throw $this->createNotFoundException("Vous n'avez pas le droit de supprimer ce dossier !");
         }
 
@@ -249,7 +251,7 @@ class FilesController extends AbstractController
         if (count($realPath) > 1) {
             $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
-            if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+            if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
                 throw $this->createNotFoundException("Vous n'avez pas le droit de renommer ce fichier !");
             }
         }
@@ -300,7 +302,7 @@ class FilesController extends AbstractController
 
         if (count($realPath) > 1) {
             $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
-            if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+            if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
                 throw $this->createNotFoundException("Vous n'avez pas le droit de créer de sous-dossier dans ce dossier !");
             }
         }
@@ -338,6 +340,8 @@ class FilesController extends AbstractController
                 $parentDirectory = new ParentDirectory();
                 $parentDirectory->setName($name);
                 $parentDirectory->setOwnerRole($user->getFolderRole());
+                $parentDirectory->setIsPublic(false);
+                $parentDirectory->setUserCreated($user);
 
                 $this->entityManager->persist($parentDirectory);
                 $this->entityManager->flush();
@@ -372,7 +376,7 @@ class FilesController extends AbstractController
         $realPath = explode('/', $filepath);
         $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
-        if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+        if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
             throw $this->createNotFoundException("Vous n'avez pas le droit de renommer ce dossier !");
         }
 
@@ -431,7 +435,7 @@ class FilesController extends AbstractController
         $realPath = explode('/', $path);
         $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
-        if (null === $parentDir || ($parentDir->getOwnerRole() !== $user->getFolderRole() && !in_array($user->getFolderRole(), $parentDir->getOwnerRole()->getHigherRoles(), true))) {
+        if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
             throw $this->createNotFoundException("Vous n'avez pas le droit d'uploader des fichiers dans ce dossier !");
         }
 
