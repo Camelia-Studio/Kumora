@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="container mx-auto px-16 mt-4">
+        <div class="block p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+            <h3 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Gérer les permissions du dossier {{ parentDir.name }}</h3>
+            {{ form_start(form) }}
+            {{ form_row(form.ownerRole) }}
+            {{ form_row(form.isPublic) }}
+            {{ form_label(form.parentDirectoryPermissions) }}
+            {{ form_widget(form.parentDirectoryPermissions) }}
+                <button type="button" id="add-parentDirectoryPermissions" class="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Ajouter</button>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block title %}
+    Gérer les permissions du dossier {{ parentDir.name }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('readystatechange', (e) => {
+            if (document.readyState === "complete") {
+                document.querySelector('#add-parentDirectoryPermissions').addEventListener('click', function() {
+                    const container = document.querySelector('#file_permission_parentDirectoryPermissions');
+                    const prototype = container.dataset.prototype;
+                    const index = container.children.length;
+
+                    container.insertAdjacentHTML('beforeend', prototype.replace(/__name__/g, index));
+                });
+            }
+        })
+    </script>
+{% endblock %}

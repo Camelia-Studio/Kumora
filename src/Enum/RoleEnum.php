@@ -32,4 +32,22 @@ enum RoleEnum: string
 
         return $roles;
     }
+
+    public function getInferiorRoles(): array
+    {
+        $roles = [];
+
+        $isFound = false;
+        foreach (RoleEnum::cases() as $role) {
+            if ($role === $this) {
+                $isFound = true;
+            }
+
+            if ($isFound) {
+                $roles[] = $role;
+            }
+        }
+
+        return $roles;
+    }
 }

@@ -8,12 +8,14 @@ use App\Entity\ParentDirectory;
 use App\Entity\User;
 use App\Enum\RoleEnum;
 use App\Form\CreateDirectoryType;
+use App\Form\FilePermissionType;
 use App\Form\RenameType;
 use App\Form\UploadType;
 use App\Repository\ParentDirectoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -45,7 +47,9 @@ class FilesController extends AbstractController
         $path = $this->normalizePath($path);
         $this->getUser();
         if ('' !== $path) {
-            $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $path]);
+            $pathExploded = explode('/', $path);
+
+            $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $pathExploded[0]]);
 
             if (null === $parentDir || !$defaultAdapter->directoryExists($path)) {
                 throw $this->createNotFoundException("Ce dossier n'existe pas !");
@@ -121,17 +125,8 @@ class FilesController extends AbstractController
         }
 
         // Si l'owner role sur le parent est visiteur, on peut accéder au fichier sans être connecté
-        if (RoleEnum::VISITEUR !== $parentDir->getOwnerRole()) {
-            $this->denyAccessUnlessGranted('ROLE_USER');
-
-            /**
-             * @var User $user
-             */
-            $user = $this->getUser();
-
-            if (!$this->isGranted('file_read', $parentDir)) {
-                throw $this->createNotFoundException("Vous n'avez pas le droit d'accéder à ce fichier !");
-            }
+        if (!$this->isGranted('file_read', $parentDir)) {
+            throw $this->createNotFoundException("Vous n'avez pas le droit d'accéder à ce fichier !");
         }
 
         $mimetype = $defaultAdapter->mimeType($file);
@@ -473,5 +468,51 @@ class FilesController extends AbstractController
         $path = preg_replace('/(?<!\w)\.(?!\w)/', '', $path);
 
         return str_replace('//', '/', $path);
+    }
+
+    #[Route('/file-edit-permission/{parentDir}', name: 'file_edit_permission')]
+    #[IsGranted('ROLE_USER')]
+    public function fileRead(#[MapEntity(mapping: ['parentDir' => 'name'])] ParentDirectory $parentDir, Request $request): Response
+    {
+        /**
+         * @var User $user
+         */
+        $user = $this->getUser();
+
+        // 2 possibilités : soit l'utilisateur est le créateur du dossier, soit le dossier est public et l'utilisateur a le role Conseil d'administration
+        // Si ce n'est pas le cas, on redirige vers la page d'accueil
+        if ($parentDir->getUserCreated() !== $user) {
+            if ($parentDir->isPublic() && RoleEnum::CONSEIL_ADMINISTRATION !== $user->getFolderRole()) {
+                $this->addFlash('error', 'Vous n\'avez pas le droit de modifier les permissions de ce dossier.');
+                return $this->redirectToRoute('app_files_index');
+            } elseif (!$parentDir->isPublic()) {
+                $this->addFlash('error', 'Vous n\'avez pas le droit de modifier les permissions de ce dossier.');
+                return $this->redirectToRoute('app_files_index');
+            }
+        }
+
+        $form = $this->createForm(FilePermissionType::class, $parentDir);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $datas = $form->getData();
+
+            foreach ($datas->getParentDirectoryPermissions() as $parentPerm) {
+                $this->entityManager->persist($parentPerm);
+            }
+            $this->entityManager->persist($datas);
+
+            $this->entityManager->flush();
+
+            $this->addFlash('success', 'Les permissions ont bien été modifiées.');
+
+            return $this->redirectToRoute('app_files_index');
+        }
+
+        return $this->render('files/file_edit.html.twig', [
+            'parentDir' => $parentDir,
+            'form' => $form->createView(),
+        ]);
     }
 }

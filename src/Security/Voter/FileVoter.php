@@ -26,10 +26,16 @@ final class FileVoter extends Voter
          */
         $realSubject = $subject;
         $user = $token->getUser();
+
+        $parentDirectoryPermissionsVisiteurRead = array_filter($realSubject->getParentDirectoryPermissions()->toArray(), static fn (ParentDirectoryPermission $parentDirectoryPermission) => RoleEnum::VISITEUR === $parentDirectoryPermission->getRole());
+
+        if ([] !== $parentDirectoryPermissionsVisiteurRead && !($user instanceof User)) {
+            return 'file_read' === $attribute && array_values($parentDirectoryPermissionsVisiteurRead)[0]->isRead();
+        }
+
         if (!$user instanceof User) {
             return false;
         }
-
         $parentDirectoryPermissions = array_filter($realSubject->getParentDirectoryPermissions()->toArray(), static fn (ParentDirectoryPermission $parentDirectoryPermission) => $parentDirectoryPermission->getRole() === $user->getFolderRole());
 
         $parentDirectoryPermission = null;
