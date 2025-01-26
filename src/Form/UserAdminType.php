@@ -20,7 +20,7 @@ class UserAdminType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('fullname', EmailType::class, [
+            ->add('fullname', null, [
                 'label' => 'Nom complet',
             ])
             ->add('email', EmailType::class, [
