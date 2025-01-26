@@ -43,11 +43,7 @@ class FilesController extends AbstractController
     public function index(Filesystem $defaultAdapter, UrlGeneratorInterface $urlGenerator, #[MapQueryParameter('path')] string $path = ''): Response
     {
         $path = $this->normalizePath($path);
-        /**
-         * @var User $user
-         */
-        $user = $this->getUser();
-
+        $this->getUser();
         if ('' !== $path) {
             $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $path]);
 
@@ -55,9 +51,7 @@ class FilesController extends AbstractController
                 throw $this->createNotFoundException("Ce dossier n'existe pas !");
             }
 
-
-
-            if (!$this->isGranted('file', $parentDir)) {
+            if (!$this->isGranted('file_read', $parentDir)) {
                 throw $this->createNotFoundException("Vous n'avez pas le droit d'accéder à ce dossier !");
             }
         }
@@ -72,15 +66,15 @@ class FilesController extends AbstractController
                 // On vérifie si l'utilisateur a le droit d'accéder au fichier (vérifier que owner_role du parentDirectory correspondant est bien le folderRole de l'utilisateur)
                 $pathFile = explode('/', (string) $file['path']);
                 if ('' !== $path) {
-                    $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $pathFile[0]]);
+                    $parentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => $pathFile[0]]);
 
-                    if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
+                    if (null === $parentDirectory || !$this->isGranted('file_read', $parentDirectory)) {
                         continue;
                     }
                 } elseif ('file' !== $file['type']) {
-                    $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $filename]);
+                    $parentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => $filename]);
 
-                    if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
+                    if (null === $parentDirectory || !$this->isGranted('file_read', $parentDirectory)) {
                         continue;
                     }
                 }
@@ -108,6 +102,7 @@ class FilesController extends AbstractController
         return $this->render('files/index.html.twig', [
             'files' => $realFiles,
             'path' => $path,
+            'parentDir' => $parentDir ?? null,
         ]);
     }
 
@@ -134,7 +129,7 @@ class FilesController extends AbstractController
              */
             $user = $this->getUser();
 
-            if (!$this->isGranted('file', $parentDir)) {
+            if (!$this->isGranted('file_read', $parentDir)) {
                 throw $this->createNotFoundException("Vous n'avez pas le droit d'accéder à ce fichier !");
             }
         }
@@ -167,18 +162,16 @@ class FilesController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function fileDelete(Filesystem $defaultAdapter, #[MapQueryParameter('filename')] string $filename): RedirectResponse
     {
-        /**
-         * @var User $user
-         */
-        $user = $this->getUser();
+        $this->getUser();
         $file = $this->normalizePath($filename);
 
         $realPath = explode('/', $file);
+        $parentDir = null;
 
         if (count($realPath) > 1) {
             $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
-            if (null === $parentDir  || !$this->isGranted('file', $parentDir)) {
+            if (null === $parentDir  || !$this->isGranted('file_write', $parentDir)) {
                 throw $this->createNotFoundException("Vous n'avez pas le droit de supprimer ce fichier !");
             }
         }
@@ -204,28 +197,35 @@ class FilesController extends AbstractController
     public function directoryDelete(Filesystem $defaultAdapter, #[MapQueryParameter('path')] string $path): RedirectResponse
     {
         $path = $this->normalizePath($path);
-        /**
-         * @var User $user
-         */
-        $user = $this->getUser();
+        $this->getUser();
 
         $realPath = explode('/', $path);
         $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
-        if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
+        if (null === $parentDir || !$this->isGranted('file_write', $parentDir)) {
             throw $this->createNotFoundException("Vous n'avez pas le droit de supprimer ce dossier !");
         }
 
         if ('' !== $path && !str_starts_with($path, '.') && $defaultAdapter->directoryExists($path)) {
             $defaultAdapter->deleteDirectory($path);
+            if ($parentDir->getName() === $path) {
+                $this->entityManager->remove($parentDir);
+                $this->entityManager->flush();
+            }
 
             $this->addFlash('success', 'Le dossier a bien été supprimé.');
         } else {
             $this->addFlash('error', 'Le dossier n\'existe pas.');
         }
 
+        $newPath = dirname($path);
+
+        if ('.' === $newPath) {
+            $newPath = '';
+        }
+
         return $this->redirectToRoute('app_files_index', [
-            'path' => dirname($path),
+            'path' => $newPath,
         ]);
     }
 
@@ -237,10 +237,7 @@ class FilesController extends AbstractController
     public function rename(#[MapQueryParameter('path')] string $filepath, Request $request, Filesystem $defaultAdapter): Response
     {
         $filepath = $this->normalizePath($filepath);
-        /**
-         * @var User $user
-         */
-        $user = $this->getUser();
+        $this->getUser();
 
         if ('' === $filepath || str_starts_with($filepath, '.') || !$defaultAdapter->fileExists($filepath)) {
             throw $this->createNotFoundException("Ce fichier n'existe pas !");
@@ -251,7 +248,7 @@ class FilesController extends AbstractController
         if (count($realPath) > 1) {
             $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
-            if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
+            if (null === $parentDir || !$this->isGranted('file_write', $parentDir)) {
                 throw $this->createNotFoundException("Vous n'avez pas le droit de renommer ce fichier !");
             }
         }
@@ -302,7 +299,7 @@ class FilesController extends AbstractController
 
         if (count($realPath) > 1) {
             $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
-            if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
+            if (null === $parentDir || !$this->isGranted('file_write', $parentDir)) {
                 throw $this->createNotFoundException("Vous n'avez pas le droit de créer de sous-dossier dans ce dossier !");
             }
         }
@@ -368,15 +365,12 @@ class FilesController extends AbstractController
     public function renameDirectory(#[MapQueryParameter('path')] string $filepath, Request $request, Filesystem $defaultAdapter): Response
     {
         $filepath = $this->normalizePath($filepath);
-        /**
-         * @var User $user
-         */
-        $user = $this->getUser();
+        $this->getUser();
 
         $realPath = explode('/', $filepath);
         $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
-        if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
+        if (null === $parentDir || !$this->isGranted('file_write', $parentDir)) {
             throw $this->createNotFoundException("Vous n'avez pas le droit de renommer ce dossier !");
         }
 
@@ -423,10 +417,7 @@ class FilesController extends AbstractController
     {
         $path = $this->normalizePath($path);
 
-        /**
-         * @var User $user
-         */
-        $user = $this->getUser();
+        $this->getUser();
 
         if ('' === $path) {
             throw $this->createNotFoundException("Vous ne pouvez pas uploader de fichier à la racine !");
@@ -435,7 +426,7 @@ class FilesController extends AbstractController
         $realPath = explode('/', $path);
         $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
-        if (null === $parentDir || !$this->isGranted('file', $parentDir)) {
+        if (null === $parentDir || !$this->isGranted('file_write', $parentDir)) {
             throw $this->createNotFoundException("Vous n'avez pas le droit d'uploader des fichiers dans ce dossier !");
         }
 
@@ -478,6 +469,8 @@ class FilesController extends AbstractController
         $path = trim($path, '/');
         // On retire les chemins relatifs
         $path = str_replace('..', '', $path);
+        // On retire les . qui sont seul dans la chaîne, en vérifiant qu'il n'y a pas de lettre avant ou après
+        $path = preg_replace('/(?<!\w)\.(?!\w)/', '', $path);
 
         return str_replace('//', '/', $path);
     }

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "13818ed85d08a0fb5be7425a3277b4c7",
+    "content-hash": "d8ceef27639b2bdc9c0081bebf3a7320",
     "packages": [
         {
             "name": "composer/semver",
@@ -8217,16 +8217,16 @@
         },
         {
             "name": "symfonycasts/tailwind-bundle",
-            "version": "v0.7.0",
+            "version": "v0.7.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymfonyCasts/tailwind-bundle.git",
-                "reference": "5c0e36694a49f017a06d0331e45ca384fc5f7677"
+                "reference": "81c9e6ff2bb1a95e67fc6af04ca87fccdcf55aa4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymfonyCasts/tailwind-bundle/zipball/5c0e36694a49f017a06d0331e45ca384fc5f7677",
-                "reference": "5c0e36694a49f017a06d0331e45ca384fc5f7677",
+                "url": "https://api.github.com/repos/SymfonyCasts/tailwind-bundle/zipball/81c9e6ff2bb1a95e67fc6af04ca87fccdcf55aa4",
+                "reference": "81c9e6ff2bb1a95e67fc6af04ca87fccdcf55aa4",
                 "shasum": ""
             },
             "require": {
@@ -8266,9 +8266,9 @@
             ],
             "support": {
                 "issues": "https://github.com/SymfonyCasts/tailwind-bundle/issues",
-                "source": "https://github.com/SymfonyCasts/tailwind-bundle/tree/v0.7.0"
+                "source": "https://github.com/SymfonyCasts/tailwind-bundle/tree/v0.7.1"
             },
-            "time": "2025-01-22T16:31:51+00:00"
+            "time": "2025-01-23T14:54:07+00:00"
         },
         {
             "name": "tales-from-a-dev/flowbite-bundle",

@@ -6,6 +6,8 @@ namespace App\Entity;
 
 use App\Enum\RoleEnum;
 use App\Repository\ParentDirectoryRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ParentDirectoryRepository::class)]
@@ -28,6 +30,17 @@ class ParentDirectory
 
     #[ORM\Column]
     private ?bool $isPublic = null;
+
+    /**
+     * @var Collection<int, ParentDirectoryPermission>
+     */
+    #[ORM\OneToMany(targetEntity: ParentDirectoryPermission::class, mappedBy: 'parentDirectory', orphanRemoval: true)]
+    private Collection $parentDirectoryPermissions;
+
+    public function __construct()
+    {
+        $this->parentDirectoryPermissions = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -78,6 +91,34 @@ class ParentDirectory
     public function setIsPublic(bool $isPublic): static
     {
         $this->isPublic = $isPublic;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ParentDirectoryPermission>
+     */
+    public function getParentDirectoryPermissions(): Collection
+    {
+        return $this->parentDirectoryPermissions;
+    }
+
+    public function addParentDirectoryPermission(ParentDirectoryPermission $parentDirectoryPermission): static
+    {
+        if (!$this->parentDirectoryPermissions->contains($parentDirectoryPermission)) {
+            $this->parentDirectoryPermissions->add($parentDirectoryPermission);
+            $parentDirectoryPermission->setParentDirectory($this);
+        }
+
+        return $this;
+    }
+
+    public function removeParentDirectoryPermission(ParentDirectoryPermission $parentDirectoryPermission): static
+    {
+        // set the owning side to null (unless already changed)
+        if ($this->parentDirectoryPermissions->removeElement($parentDirectoryPermission) && $parentDirectoryPermission->getParentDirectory() === $this) {
+            $parentDirectoryPermission->setParentDirectory(null);
+        }
 
         return $this;
     }
