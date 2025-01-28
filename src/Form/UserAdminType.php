@@ -27,7 +27,7 @@ class UserAdminType extends AbstractType
                 'label' => 'Adresse email',
             ])
             ->add('folderRole', EnumType::class, [
-                'label' => 'Role du dossier',
+                'label' => 'Groupe',
                 'class' => RoleEnum::class,
             ])
             ->add('role', ChoiceType::class, [
