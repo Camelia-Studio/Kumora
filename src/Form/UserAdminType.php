@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\User;
+use App\Enum\RoleEnum;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -18,8 +20,15 @@ class UserAdminType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            ->add('fullname', null, [
+                'label' => 'Nom complet',
+            ])
             ->add('email', EmailType::class, [
                 'label' => 'Adresse email',
+            ])
+            ->add('folderRole', EnumType::class, [
+                'label' => 'Groupe',
+                'class' => RoleEnum::class,
             ])
             ->add('role', ChoiceType::class, [
                 'label' => 'Rôle',

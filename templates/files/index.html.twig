@@ -8,6 +8,7 @@
         <div class="mt-4">
             {{ include('partials/alerts.html.twig') }}
         </div>
+        {% if parentDir == null or (parentDir != null and is_granted('file_write', parentDir)) %}
         <div class="flex justify-end">
             <a href="{{ path('app_files_create_directory', {
                 base: path
@@ -18,6 +19,7 @@
             }) }}" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Ajouter des fichiers</a>
             {% endif %}
         </div>
+        {% endif %}
         <div class="mt-4">
             {% include 'partials/breadbrumb.html.twig' %}
         </div>
@@ -62,6 +64,7 @@
                         <td class="px-6 py-4 flex gap-2 light:text-black">
                             {% if file.type == 'file' %}
                                 <a title="Permet de télécharger le fichier" href="{{ file.url }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:download" /></a>
+                                {% if is_granted('file_write', parentDir) %}
                                 <a title="Permet de renommer le fichier" href="{{ path('app_files_rename', {
                                     path: file.path
                                 }) }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" /></a>
@@ -70,13 +73,27 @@
                                         filename: file.path
                                     })
                                 }}" class="hover:text-red-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
+                                    {% endif %}
                                 {% else %}
+                                    {% if parentDir == null %}
+                                        {% set parentDirectory = get_parent_dir(file.path) %}
+                                    {% else %}
+                                        {% set parentDirectory = parentDir %}
+                                    {% endif %}
+
+                                    {% if parentDir == null and (parentDirectory.userCreated == app.user or (parentDirectory.isPublic and app.user.folderRole == enum('App\\Enum\\RoleEnum').CONSEIL_ADMINISTRATION)) %}
+                                        <a href="{{ path('app_files_file_edit_permission', {
+                                            parentDir: parentDirectory.name,
+                                        }) }}" class="hover:text-blue-700 duration-300" title="Permet de renommer le dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:shield" /></a>
+                                    {% endif %}
+                                    {% if is_granted('file_write', parentDirectory) %}
                                     <a href="{{ path('app_files_rename-directory', {
                                         path: file.path
                                     }) }}" class="hover:text-blue-700 duration-300" title="Permet de renommer le dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" /></a>
                                     <a href="{{ path('app_files_delete_directory', {
                                         path: file.path
                                     }) }}" class="hover:text-red-700 duration-300" title="Permet de supprimer le dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
+                                    {% endif %}
                             {% endif %}
                         </td>
                     </tr>

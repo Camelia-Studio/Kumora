@@ -38,7 +38,7 @@ class CreateUserCommand extends Command
         $email = $io->ask('Email de l\'utilisateur');
         $password = $io->askHidden('Mot de passe de l\'utilisateur');
         $isAdmin = $io->confirm('Est-ce un administrateur ?');
-        $folderRole = $io->choice('Rôle du dossier', array_map(static fn ($role) => $role->value, RoleEnum::cases()), RoleEnum::VISITEUR->value);
+        $folderRole = $io->choice('Groupe', array_map(static fn ($role) => $role->value, RoleEnum::cases()), RoleEnum::VISITEUR->value);
 
         try {
             $user = $this->userRepository->findOneBy(['email' => $email]);
