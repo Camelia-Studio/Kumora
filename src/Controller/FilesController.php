@@ -360,7 +360,6 @@ class FilesController extends AbstractController
     public function renameDirectory(#[MapQueryParameter('path')] string $filepath, Request $request, Filesystem $defaultAdapter): Response
     {
         $filepath = $this->normalizePath($filepath);
-        $this->getUser();
 
         $realPath = explode('/', $filepath);
         $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
@@ -386,6 +385,13 @@ class FilesController extends AbstractController
             $newName = $data['newName'];
 
             $newPath = dirname($filepath) . '/' . $newName;
+
+            // Si c'est un parent directory, on renomme le parent directory dans la base de données
+            if ($parentDir->getName() === $filepath) {
+                $parentDir->setName($newName);
+                $this->entityManager->persist($parentDir);
+                $this->entityManager->flush();
+            }
 
             $defaultAdapter->move($filepath, $newPath);
 
@@ -415,14 +421,14 @@ class FilesController extends AbstractController
         $this->getUser();
 
         if ('' === $path) {
-            throw $this->createNotFoundException("Vous ne pouvez pas uploader de fichier à la racine !");
+            throw $this->createNotFoundException("Vous ne pouvez pas téléverser de fichier à la racine !");
         }
 
         $realPath = explode('/', $path);
         $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
         if (null === $parentDir || !$this->isGranted('file_write', $parentDir)) {
-            throw $this->createNotFoundException("Vous n'avez pas le droit d'uploader des fichiers dans ce dossier !");
+            throw $this->createNotFoundException("Vous n'avez pas le droit de téléverser des fichiers dans ce dossier !");
         }
 
         $form = $this->createForm(UploadType::class);

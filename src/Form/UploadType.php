@@ -16,7 +16,7 @@ class UploadType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('files', DropzoneType::class, [
+            ->add('files', FileType::class, [
                 'label' => 'Fichiers à envoyer',
                 'attr' => [
                     'placeholder' => 'Déposez vos fichiers ici',
@@ -24,7 +24,7 @@ class UploadType extends AbstractType
                 'multiple' => true,
             ])
             ->add('submit', SubmitType::class, [
-                'label' => 'Uploader',
+                'label' => 'Téléverser',
             ])
         ;
     }
