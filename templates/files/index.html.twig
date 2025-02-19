@@ -54,7 +54,7 @@
                             {% else %}
                                 <twig:ux:icon name="line-md:folder-filled" class="w-6 h-6" />
                             {% endif %}
-                            <a class="text-blue-700 dark:text-blue-500 hover:text-blue-900 dark:hover:text-blue-700" href="{{ file.url }}">{{ file.path|basename }}</a>
+                            <a class="text-blue-700 dark:text-blue-500 hover:text-blue-900 dark:hover:text-blue-700" href="{{ file.previewUrl }}" {{ file.type == 'file' ? 'target="_blank"' : '' }}>{{ file.path|basename }}</a>
                         </th>
                         <td class="px-6 py-4">
                             {% if file.type == 'file' %}
@@ -82,6 +82,7 @@
                         </td>
                         <td class="px-6 py-4 flex gap-2 light:text-black">
                             {% if file.type == 'file' %}
+                                <a title="Permet de voir le fichier" href="{{ file.previewUrl }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:eye" /></a>
                                 <a title="Permet de télécharger le fichier" href="{{ file.url }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:download" /></a>
                                 {% if is_granted('file_write', parentDir) %}
                                 <a title="Permet de renommer le fichier" href="{{ path('app_files_rename', {

@@ -89,7 +89,10 @@ class FilesController extends AbstractController
                     'last_modified' => $file['lastModified'],
                     'size' => $file['fileSize'] ?? null,
                     'url' => 'file' === $file['type']
-                        ? $this->generateUrl('app_files_app_file_proxy', ['filename' => $file['path']], UrlGeneratorInterface::ABSOLUTE_URL)
+                        ? $this->generateUrl('app_files_app_file_proxy', ['filename' => $file['path'], 'preview' => false], UrlGeneratorInterface::ABSOLUTE_URL)
+                        : $this->generateUrl('app_files_index', ['path' => $file['path']]),
+                    'previewUrl' => 'file' === $file['type']
+                        ? $this->generateUrl('app_files_app_file_proxy', ['filename' => $file['path'], 'preview' => true], UrlGeneratorInterface::ABSOLUTE_URL)
                         : $this->generateUrl('app_files_index', ['path' => $file['path']]),
                 ];
             }
@@ -114,7 +117,7 @@ class FilesController extends AbstractController
      * @throws FilesystemException
      */
     #[Route('/file-proxy', name: 'app_file_proxy')]
-    public function fileProxy(Filesystem $defaultAdapter, #[MapQueryParameter('filename')] string $filename)
+    public function fileProxy(Filesystem $defaultAdapter, #[MapQueryParameter('filename')] string $filename, #[MapQueryParameter('preview')] bool $preview)
     {
         $file = $this->normalizePath($filename);
 
@@ -134,6 +137,7 @@ class FilesController extends AbstractController
             $mimetype = 'application/octet-stream';
         }
 
+
         $response = new StreamedResponse(static function () use ($file, $defaultAdapter): void {
             $outputStream = fopen('php://output', 'w');
             $fileStream = $defaultAdapter->readStream($file);
@@ -141,11 +145,14 @@ class FilesController extends AbstractController
         });
 
         $response->headers->set('Content-Type', $mimetype);
-        $disposition = HeaderUtils::makeDisposition(
-            HeaderUtils::DISPOSITION_ATTACHMENT,
-            basename($file)
-        );
-        $response->headers->set('Content-Disposition', $disposition);
+
+        if (!$preview) {
+            $disposition = HeaderUtils::makeDisposition(
+                HeaderUtils::DISPOSITION_ATTACHMENT,
+                basename($file)
+            );
+            $response->headers->set('Content-Disposition', $disposition);
+        }
 
         return $response;
     }
