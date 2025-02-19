@@ -33,7 +33,8 @@ class FilesController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly ParentDirectoryRepository $parentDirectoryRepository
+        private readonly ParentDirectoryRepository $parentDirectoryRepository,
+        private readonly Filesystem $defaultAdapter,
     ) {
     }
 
@@ -42,7 +43,7 @@ class FilesController extends AbstractController
      */
     #[Route('/', name: 'index')]
     #[IsGranted('ROLE_USER')]
-    public function index(Filesystem $defaultAdapter, UrlGeneratorInterface $urlGenerator, #[MapQueryParameter('path')] string $path = ''): Response
+    public function index(UrlGeneratorInterface $urlGenerator, #[MapQueryParameter('path')] string $path = ''): Response
     {
         $path = $this->normalizePath($path);
         $this->getUser();
@@ -51,7 +52,7 @@ class FilesController extends AbstractController
 
             $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $pathExploded[0]]);
 
-            if (null === $parentDir || !$defaultAdapter->directoryExists($path)) {
+            if (null === $parentDir || !$this->defaultAdapter->directoryExists($path)) {
                 throw $this->createNotFoundException("Ce dossier n'existe pas !");
             }
 
@@ -60,7 +61,7 @@ class FilesController extends AbstractController
             }
         }
 
-        $files = $defaultAdapter->listContents('/' . $path);
+        $files = $this->defaultAdapter->listContents('/' . $path);
 
         $realFiles = [];
 
@@ -87,7 +88,7 @@ class FilesController extends AbstractController
                     'type' => $file['type'],
                     'path' => $file['path'],
                     'last_modified' => $file['lastModified'],
-                    'size' => $file['fileSize'] ?? null,
+                    'size' => $file['fileSize'] ?? $this->calculateSize($file),
                     'url' => 'file' === $file['type']
                         ? $this->generateUrl('app_files_app_file_proxy', ['filename' => $file['path'], 'preview' => false], UrlGeneratorInterface::ABSOLUTE_URL)
                         : $this->generateUrl('app_files_index', ['path' => $file['path']]),
@@ -527,5 +528,20 @@ class FilesController extends AbstractController
             'parentDir' => $parentDir,
             'form' => $form->createView(),
         ]);
+    }
+
+    private function calculateSize($file): int
+    {
+        $folderPath = $file['path'];
+        // On récupère tout les fichiers dans le dossier
+        $files = $this->defaultAdapter->listContents($folderPath, true);
+
+        $size = 0;
+
+        foreach ($files as $file) {
+            $size += $file['fileSize'] ?? 0;
+        }
+
+        return $size;
     }
 }
