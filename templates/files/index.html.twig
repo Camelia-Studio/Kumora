@@ -12,11 +12,11 @@
         <div class="flex justify-end">
             <a href="{{ path('app_files_create_directory', {
                 base: path
-            }) }}" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Créer un dossier</a>
+            }) }}" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-hidden dark:focus:ring-blue-800">Créer un dossier</a>
             {% if path != '' %}
             <a href="{{ path('app_files_upload', {
                 path: path
-            }) }}" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Ajouter des fichiers</a>
+            }) }}" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-hidden dark:focus:ring-blue-800">Ajouter des fichiers</a>
             {% endif %}
         </div>
         {% endif %}
@@ -83,7 +83,7 @@
                         <td class="px-6 py-4 flex gap-2 light:text-black">
                             {% if file.type == 'file' %}
                                 <a title="Permet de voir le fichier" href="{{ file.previewUrl }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:eye" /></a>
-                                <button title="Permet de copier le lien de prévisualisation du fichier" onclick="navigator.clipboard.writeText('{{ file.previewUrl }}'); alert('Lien copié avec succès !')"  class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:clipboard" /></button>
+                                <button title="Permet de copier le lien de prévisualisation du fichier" onclick="navigator.clipboard.writeText('{{ file.previewUrl }}'); alert('Lien copié avec succès !')"  class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6 cursor-pointer" name="fa6-solid:clipboard" /></button>
                                 <a title="Permet de télécharger le fichier" href="{{ file.url }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:download" /></a>
                                 {% if is_granted('file_write', parentDir) %}
                                 <a title="Permet de renommer le fichier" href="{{ path('app_files_rename', {
