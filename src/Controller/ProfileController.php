@@ -22,8 +22,7 @@ class ProfileController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly UserPasswordHasherInterface $passwordHasher,
-    )
-    {
+    ) {
     }
 
     #[Route('/profile', name: 'app_profile')]
@@ -71,8 +70,6 @@ class ProfileController extends AbstractController
             'form' => $form->createView(),
         ]);
     }
-
-
 
     #[Route('/profile/edit/password', name: 'app_profile_password_edit')]
     #[IsGranted('ROLE_USER')]

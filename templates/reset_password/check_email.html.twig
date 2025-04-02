@@ -5,7 +5,7 @@
 {% block body %}
 
     <div class="container mx-auto px-16 mt-4">
-        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-xs dark:bg-gray-800 dark:border-gray-700">
             <p> Si un compte correspondant à votre adresse e-mail existe, un e-mail contenant un lien que vous pouvez utiliser pour réinitialiser votre mot de passe vient d'être envoyé. Ce lien expirera dans 1 heure.
             </p>
             <p>Si vous ne recevez pas d'e-mail, veuillez vérifier votre dossier spam ou <a class="font-medium text-blue-600 dark:text-blue-500 hover:underline" href="{{ path('app_forgot_password_request') }}">réessayer</a>.</p>

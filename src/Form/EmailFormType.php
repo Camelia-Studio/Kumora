@@ -29,7 +29,7 @@ class EmailFormType extends AbstractType
                 'attr' => [
                     'placeholder' => 'Mot de passe actuel',
                     'autocomplete' => 'new-password',
-                ]
+                ],
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'Enregistrer',
@@ -43,7 +43,7 @@ class EmailFormType extends AbstractType
             'data_class' => EmailDTO::class,
             'attr' => [
                 'autocomplete' => 'off',
-            ]
+            ],
         ]);
     }
 }

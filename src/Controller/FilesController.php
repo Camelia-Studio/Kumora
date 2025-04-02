@@ -138,7 +138,6 @@ class FilesController extends AbstractController
             $mimetype = 'application/octet-stream';
         }
 
-
         $response = new StreamedResponse(static function () use ($file, $defaultAdapter): void {
             $outputStream = fopen('php://output', 'w');
             $fileStream = $defaultAdapter->readStream($file);
