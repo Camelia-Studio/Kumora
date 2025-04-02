@@ -8,9 +8,8 @@ enum RoleEnum: string
 {
     case CONSEIL_ADMINISTRATION = 'Conseil d\'administration';
     case ADMINISTRATEUR = 'Administrateur';
-    case MEMBRE = 'Membre';
+    case MEMBRE_ADHERENT = 'Membre adhérent';
     case MEMBRE_HONORAIRE = 'Membre honoraire';
-    case PARTENAIRE = 'Partenaire';
     case VISITEUR = 'Visiteur';
 
     public function getHigherRoles(): array
