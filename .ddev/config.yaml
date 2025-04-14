@@ -1,0 +1,26 @@
+name: Kumora
+type: symfony
+docroot: public
+php_version: "8.3"
+webserver_type: nginx-fpm
+xdebug_enabled: false
+additional_hostnames: []
+additional_fqdns: []
+database:
+    type: mariadb
+    version: "10.11"
+use_dns_when_possible: true
+composer_version: "2"
+web_environment: []
+corepack_enable: false
+web_extra_daemons:
+    - name: tailwind-build
+      command: rm -rf var && rm -rf vendor && composer install && npm install && php bin/console tailwind:build --watch
+hooks:
+    post-start:
+        - exec: rm -rf var && rm -rf vendor
+        - exec: composer install
+        - exec: php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+        - exec: npm install
+        - exec: php bin/console importmap:install
+        - exec: php bin/console tailwind:build
