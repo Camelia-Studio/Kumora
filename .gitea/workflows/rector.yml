@@ -21,6 +21,6 @@ jobs:
       run: php composer.phar install --prefer-dist --no-progress --no-suggest
     - name: Cache Symfony dev container
       run: |
-        php bin/console cache:warmup
+        php bin/console cache:warmup --env=dev
     - name: Run Rector
       run: vendor/bin/rector --dry-run
