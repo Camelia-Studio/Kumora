@@ -16,6 +16,8 @@ jobs:
       run: php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && php composer-setup.php && php -r "unlink('composer-setup.php');"
     - name: Install Dependencies
       run: php composer.phar install
+    - name: Cache clear
+      run: php bin/console cache:clear
     - name: Run PHPStan
       run: php vendor/bin/phpstan
 
