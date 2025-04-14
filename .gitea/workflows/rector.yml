@@ -1,4 +1,9 @@
 on: [push, pull_request]
+
+
+env:
+  APP_ENV: dev
+
 name: rector
 jobs:
   rector:

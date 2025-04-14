@@ -2,6 +2,9 @@ name: CI
 
 on: [push]
 
+env:
+  APP_ENV: dev
+
 jobs:
   build-test:
     runs-on: ubuntu-latest
