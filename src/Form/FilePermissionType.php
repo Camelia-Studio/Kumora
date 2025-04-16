@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Enum\RoleEnum;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
@@ -24,8 +25,13 @@ class FilePermissionType extends AbstractType
                 'class' => RoleEnum::class,
                 'label' => 'Rôle minimum',
             ])
-            ->add('isPublic', null, [
-                'label' => 'Dossier public',
+            ->add('typeDossier', ChoiceType::class, [
+                'label' => 'Type de dossier',
+                'mapped' => false,
+                'choices' => [
+                    'Dossier de partage' => 'shared',
+                    'Dossier privé' => 'private',
+                ],
             ])
             ->add('parentDirectoryPermissions', CollectionType::class, [
                 'entry_type' => ParentDirectoryPermissionType::class,

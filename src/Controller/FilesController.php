@@ -294,10 +294,6 @@ class FilesController extends AbstractController
     {
         $basePath = $this->normalizePath($basePath);
         $realPath = explode('/', $basePath);
-        /**
-         * @var User $user
-         */
-        $user = $this->getUser();
 
         if (count($realPath) > 1) {
             $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
@@ -339,7 +335,7 @@ class FilesController extends AbstractController
                 $parentDirectory = new ParentDirectory();
                 $parentDirectory->setName($name);
                 $parentDirectory->setOwnerRole($user->getFolderRole());
-                $parentDirectory->setIsPublic(false);
+                $parentDirectory->setIsPublic(true);
                 $parentDirectory->setUserCreated($user);
 
                 $this->entityManager->persist($parentDirectory);
@@ -506,10 +502,19 @@ class FilesController extends AbstractController
 
         $form = $this->createForm(FilePermissionType::class, $parentDir);
 
+        $form->get('typeDossier')->setData($parentDir->isPublic() ? 'shared' : 'private');
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $datas = $form->getData();
+            $typeDossier = $form->get('typeDossier')->getData();
+
+            if ('shared' === $typeDossier) {
+                $datas->setIsPublic(true);
+            } else {
+                $datas->setIsPublic(false);
+            }
 
             foreach ($datas->getParentDirectoryPermissions() as $parentPerm) {
                 $this->entityManager->persist($parentPerm);

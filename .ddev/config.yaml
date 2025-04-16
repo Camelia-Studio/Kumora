@@ -13,12 +13,15 @@ use_dns_when_possible: true
 composer_version: "2"
 web_environment: []
 corepack_enable: false
+omit_containers:
+    - db
 web_extra_daemons:
     - name: tailwind-build
-      command: rm -rf var && rm -rf vendor && composer install && npm install && php bin/console tailwind:build --watch
+      command: php bin/console tailwind:build --watch
+      directory: /var/www/html
 hooks:
     post-start:
-        - exec: rm -rf var && rm -rf vendor
+        - exec: rm -rf var/cache var/log var/tailwind
         - exec: composer install
         - exec: php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
         - exec: npm install
