@@ -41,6 +41,15 @@
                     const index = container.children.length;
 
                     container.insertAdjacentHTML('beforeend', prototype.replace(/__name__/g, index));
+
+                    container.querySelector(`#file_permission_parentDirectoryPermissions_${index}_role`).addEventListener('change', function(e) {
+                        const value = e.target.value;
+                        if (value === 'Visiteur') {
+                            container.querySelector(`#file_permission_parentDirectoryPermissions_${index}_write`).parentElement.parentElement.classList.add('hidden');
+                        } else {
+                            container.querySelector(`#file_permission_parentDirectoryPermissions_${index}_write`).parentElement.parentElement.classList.remove('hidden');
+                        }
+                    });
                 });
 
                 document.querySelector('#file_permission_typeDossier').addEventListener('change', function(e) {
