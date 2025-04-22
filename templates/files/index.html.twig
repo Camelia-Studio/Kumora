@@ -103,7 +103,7 @@
                                     {% if parentDir == null and (parentDirectory.userCreated == app.user or (parentDirectory.isPublic and app.user.folderRole == enum('App\\Enum\\RoleEnum').CONSEIL_ADMINISTRATION)) %}
                                         <a href="{{ path('app_files_file_edit_permission', {
                                             parentDir: parentDirectory.name,
-                                        }) }}" class="hover:text-blue-700 duration-300" title="Permet de modifier les permissions du dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:shield" /></a>
+                                        }) }}" class="hover:text-yellow-400 duration-300" title="Permet de modifier les permissions du dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:shield" /></a>
                                     {% endif %}
                                     {% if is_granted('file_write', parentDirectory) %}
                                     <a href="{{ path('app_files_rename-directory', {
