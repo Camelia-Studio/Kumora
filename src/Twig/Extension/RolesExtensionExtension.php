@@ -16,6 +16,7 @@ class RolesExtensionExtension extends AbstractExtension
         return [
             new TwigFunction('getHigherRoles', [RolesExtensionRuntime::class, 'getHigherRoles']),
             new TwigFunction('getHighestRole', [RolesExtensionRuntime::class, 'getHighestRole']),
+            new TwigFunction('getLowestRole', [RolesExtensionRuntime::class, 'getLowestRole']),
         ];
     }
 }

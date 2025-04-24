@@ -44,7 +44,7 @@
 
                     container.querySelector(`#file_permission_parentDirectoryPermissions_${index}_role`).addEventListener('change', function(e) {
                         const value = e.target.value;
-                        if (value === 'Visiteur') {
+                        if (value === '{{ getLowestRole().id }}') {
                             container.querySelector(`#file_permission_parentDirectoryPermissions_${index}_write`).parentElement.parentElement.classList.add('hidden');
                         } else {
                             container.querySelector(`#file_permission_parentDirectoryPermissions_${index}_write`).parentElement.parentElement.classList.remove('hidden');
