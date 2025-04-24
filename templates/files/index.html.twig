@@ -73,12 +73,14 @@
                                 {% endif %}
                                 {% if parentDirectory.public %}
                                     <div class="flex gap-1">
-                                        {% for parentRole in parentDirectory.ownerRole.getHigherRoles() %}
-                                            <img class="w-6 h-6" title="{{ parentRole.value }}" src="https://ui-avatars.com/api/?name={{ parentRole.value  }}" alt="">
+                                        {% for parentRole in getHigherRoles(parentDirectory.ownerRole) %}
+                                            <img class="w-6 h-6" title="{{ parentRole.name }}" src="{{ parentRole.image ?? ('https://ui-avatars.com/api/?name=' ~ parentRole.name) }}" alt="">
                                         {% endfor %}
-                                        <img class="w-6 h-6" title="{{ parentDirectory.ownerRole.value }}" src="https://ui-avatars.com/api/?name={{ parentDirectory.ownerRole.value }}" alt="">
+                                        {% if parentDirectory.ownerRole is not null %}
+                                        <img class="w-6 h-6" title="{{ parentDirectory.ownerRole.name }}" src="{{ parentDirectory.ownerRole.image ?? ('https://ui-avatars.com/api/?name=' ~ parentDirectory.ownerRole.name) }}" alt="">
+                                        {% endif %}
                                         {% for permission in parentDirectory.parentDirectoryPermissions %}
-                                            <img class="w-6 h-6" title="{{ permission.role.value }}" src="https://ui-avatars.com/api/?name={{ permission.role.value  }}" alt="">
+                                            <img class="w-6 h-6" title="{{ permission.role.name }}" src="{{ parentDirectory.ownerRole.image ?? ('https://ui-avatars.com/api/?name=' ~ permission.role.name) }}" alt="">
                                         {% endfor %}
                                     </div>
                                     {% else %}
@@ -108,7 +110,7 @@
                                         {% set parentDirectory = parentDir %}
                                     {% endif %}
 
-                                    {% if parentDir == null and (parentDirectory.userCreated == app.user or (parentDirectory.isPublic and app.user.folderRole == enum('App\\Enum\\RoleEnum').CONSEIL_ADMINISTRATION)) %}
+                                    {% if parentDir == null and (parentDirectory.userCreated == app.user or (parentDirectory.isPublic and app.user.accessGroup == getHighestRole()) %}
                                         <a href="{{ path('app_files_file_edit_permission', {
                                             parentDir: parentDirectory.name,
                                         }) }}" class="hover:text-yellow-400 duration-300" title="Permet de modifier les permissions du dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:shield" /></a>

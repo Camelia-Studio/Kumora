@@ -7,13 +7,16 @@ namespace App\Security\Voter;
 use App\Entity\ParentDirectory;
 use App\Entity\ParentDirectoryPermission;
 use App\Entity\User;
-use App\Enum\RoleEnum;
+use App\Repository\AccessGroupRepository;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
-use Symfony\Component\Security\Core\User\UserInterface;
 
 final class FileVoter extends Voter
 {
+    public function __construct(private readonly AccessGroupRepository $accessGroupRepository)
+    {
+    }
+
     protected function supports(string $attribute, mixed $subject): bool
     {
         return $subject instanceof ParentDirectory;
@@ -27,7 +30,7 @@ final class FileVoter extends Voter
         $realSubject = $subject;
         $user = $token->getUser();
 
-        $parentDirectoryPermissionsVisiteurRead = array_filter($realSubject->getParentDirectoryPermissions()->toArray(), static fn (ParentDirectoryPermission $parentDirectoryPermission) => RoleEnum::VISITEUR === $parentDirectoryPermission->getRole());
+        $parentDirectoryPermissionsVisiteurRead = array_filter($realSubject->getParentDirectoryPermissions()->toArray(), static fn (ParentDirectoryPermission $parentDirectoryPermission) => $this->accessGroupRepository->getLowestRole() === $parentDirectoryPermission->getRole());
 
         if ([] !== $parentDirectoryPermissionsVisiteurRead && !($user instanceof User)) {
             return 'file_read' === $attribute && array_values($parentDirectoryPermissionsVisiteurRead)[0]->isRead();
@@ -36,7 +39,7 @@ final class FileVoter extends Voter
         if (!$user instanceof User) {
             return false;
         }
-        $parentDirectoryPermissions = array_filter($realSubject->getParentDirectoryPermissions()->toArray(), static fn (ParentDirectoryPermission $parentDirectoryPermission) => $parentDirectoryPermission->getRole() === $user->getFolderRole());
+        $parentDirectoryPermissions = array_filter($realSubject->getParentDirectoryPermissions()->toArray(), static fn (ParentDirectoryPermission $parentDirectoryPermission) => $parentDirectoryPermission->getRole() === $user->getAccessGroup());
 
         $parentDirectoryPermission = null;
 
@@ -53,6 +56,6 @@ final class FileVoter extends Voter
         if ($realSubject->getUserCreated() === $user) {
             return true;
         }
-        return $realSubject->isPublic() && ($checkNeeded || $realSubject->getOwnerRole() === $user->getFolderRole() || in_array($user->getFolderRole(), $realSubject->getOwnerRole()->getHigherRoles(), true));
+        return $realSubject->isPublic() && ($checkNeeded || $realSubject->getOwnerRole() === $user->getAccessGroup() || in_array($user->getAccessGroup(), $this->accessGroupRepository->getHigherRoles($realSubject->getOwnerRole()), true));
     }
 }

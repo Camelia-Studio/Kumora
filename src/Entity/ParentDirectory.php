@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Enum\RoleEnum;
 use App\Repository\ParentDirectoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -21,8 +20,8 @@ class ParentDirectory
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
-    #[ORM\Column(enumType: RoleEnum::class)]
-    private ?RoleEnum $ownerRole = null;
+    #[ORM\ManyToOne(inversedBy: 'users')]
+    private ?AccessGroup $ownerRole = null;
 
     #[ORM\ManyToOne(inversedBy: 'parentDirectories')]
     #[ORM\JoinColumn(nullable: false)]
@@ -59,12 +58,12 @@ class ParentDirectory
         return $this;
     }
 
-    public function getOwnerRole(): ?RoleEnum
+    public function getOwnerRole(): ?AccessGroup
     {
         return $this->ownerRole;
     }
 
-    public function setOwnerRole(RoleEnum $ownerRole): static
+    public function setOwnerRole(AccessGroup $ownerRole): static
     {
         $this->ownerRole = $ownerRole;
 

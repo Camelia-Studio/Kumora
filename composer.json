@@ -109,6 +109,7 @@
         }
     },
     "require-dev": {
+        "doctrine/doctrine-fixtures-bundle": "^4.1",
         "friendsofphp/php-cs-fixer": "^3.75.0",
         "phpstan/extension-installer": "^1.4.3",
         "phpstan/phpstan-strict-rules": "^2.0.4",

@@ -24,6 +24,9 @@
                         Rôle
                     </th>
                     <th scope="col" class="px-6 py-3">
+                        Groupe d'accès
+                    </th>
+                    <th scope="col" class="px-6 py-3">
                         Actions
                     </th>
                 </tr>
@@ -39,6 +42,9 @@
                         </td>
                         <td class="px-6 py-4">
                             {{ user.roles[0] == 'ROLE_ADMIN' ? 'Administrateur' : 'Utilisateur' }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ user.accessGroup.name ?? 'Aucun groupe d\'accès' }}
                         </td>
                         <td class="px-6 py-4 flex gap-2 light:text-black">
                             <a href="{{ path('app_admin_user_edit', {

@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace App\Form;
 
-use App\Entity\ParentDirectory;
+use App\Entity\AccessGroup;
 use App\Entity\ParentDirectoryPermission;
-use App\Entity\User;
-use App\Enum\RoleEnum;
+use App\Repository\AccessGroupRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -20,9 +17,12 @@ class ParentDirectoryPermissionType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('role', EnumType::class, [
-                'class' => RoleEnum::class,
-                'label' => 'Rôle',
+            ->add('role', EntityType::class, [
+                'label' => 'Groupe d\'accès',
+                'class' => AccessGroup::class,
+                'query_builder' => static fn (AccessGroupRepository $repository) => $repository->createQueryBuilder('a')
+                    ->orderBy('a.position', 'ASC'),
+                'choice_label' => 'name',
             ])
             ->add('read', null, [
                 'label' => 'Lecture',

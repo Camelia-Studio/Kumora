@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Enum\RoleEnum;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -12,7 +11,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -40,8 +38,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    #[ORM\Column(enumType: RoleEnum::class)]
-    private ?RoleEnum $folder_role = null;
+    // folder_role
 
     #[ORM\Column(length: 255)]
     private ?string $fullname = null;
@@ -51,6 +48,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: ParentDirectory::class, mappedBy: 'userCreated')]
     private Collection $parentDirectories;
+
+    #[ORM\ManyToOne(inversedBy: 'users')]
+    private ?AccessGroup $accessGroup = null;
 
     public function __construct()
     {
@@ -132,18 +132,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getFolderRole(): ?RoleEnum
-    {
-        return $this->folder_role;
-    }
-
-    public function setFolderRole(RoleEnum $folder_role): static
-    {
-        $this->folder_role = $folder_role;
-
-        return $this;
-    }
-
     public function getFullname(): ?string
     {
         return $this->fullname;
@@ -180,6 +168,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         if ($this->parentDirectories->removeElement($parentDirectory) && $parentDirectory->getUserCreated() === $this) {
             $parentDirectory->setUserCreated(null);
         }
+
+        return $this;
+    }
+
+    public function getAccessGroup(): ?AccessGroup
+    {
+        return $this->accessGroup;
+    }
+
+    public function setAccessGroup(?AccessGroup $accessGroup): static
+    {
+        $this->accessGroup = $accessGroup;
 
         return $this;
     }

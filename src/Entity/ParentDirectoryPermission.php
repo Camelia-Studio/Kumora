@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Enum\RoleEnum;
 use App\Repository\ParentDirectoryPermissionRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -16,8 +15,10 @@ class ParentDirectoryPermission
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(enumType: RoleEnum::class)]
-    private ?RoleEnum $role = null;
+
+
+    #[ORM\ManyToOne(inversedBy: 'users')]
+    private ?AccessGroup $role = null;
 
     #[ORM\Column]
     private ?bool $read = null;
@@ -34,12 +35,12 @@ class ParentDirectoryPermission
         return $this->id;
     }
 
-    public function getRole(): ?RoleEnum
+    public function getRole(): ?AccessGroup
     {
         return $this->role;
     }
 
-    public function setRole(RoleEnum $role): static
+    public function setRole(AccessGroup $role): static
     {
         $this->role = $role;
 

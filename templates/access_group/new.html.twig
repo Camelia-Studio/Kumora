@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New AccessGroup{% endblock %}
+
+{% block body %}
+    <div class="container mx-auto px-16">
+        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-xs dark:bg-gray-800 dark:border-gray-700">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                {% if access_group.id is null %}
+                    Créer un nouveau groupe d'accès
+                {% else %}
+                    Modifier le groupe d'accès {{ access_group.id }}
+                {% endif %}
+            </h5>
+
+            {{ include('access_group/_form.html.twig') }}
+        </div>
+    </div>
+{% endblock %}

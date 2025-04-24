@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des groupes d'accès{% endblock %}
+
+{% block body %}
+    <div class="container mx-auto px-16">
+        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-xs dark:bg-gray-800 dark:border-gray-700">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Liste des groupes d'accès</h5>
+
+            <div class="flex justify-end">
+                <a  href="{{ path('app_access_group_new') }}"  class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Créer un groupe d'accès</a>
+            </div>
+            <div class="mt-4">
+                {{ include('partials/alerts.html.twig') }}
+            </div>
+
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-4">
+                <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">
+                            #
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Nom
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Position
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Actions
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for access_group in access_groups %}
+                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
+                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                {{ access_group.id }}
+                            </th>
+                            <td class="px-6 py-4">
+                                {{ access_group.name }}
+                            </td>
+                            <td class="px-6 py-4">
+                                {{ access_group.position }}
+                            </td>
+                            <td class="px-6 py-4 flex gap-2 light:text-black">
+                                <a title="Permet de modifier le nom du groupe d'accès" href="{{ path('app_access_group_edit', {
+                                    id: access_group.id
+                                }) }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" /></a>
+                                <a title="Permet de supprimer le groupe d'accès" href="{{
+                                path('app_access_group_delete', {
+                                    id: access_group.id
+                                })
+                                }}" class="hover:text-red-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
+                            <th colspan="4" scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                Aucun groupe d'accès trouvé !
+                            </th>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -6,11 +6,11 @@ namespace App\Controller;
 
 use App\Entity\ParentDirectory;
 use App\Entity\User;
-use App\Enum\RoleEnum;
 use App\Form\CreateDirectoryType;
 use App\Form\FilePermissionType;
 use App\Form\RenameType;
 use App\Form\UploadType;
+use App\Repository\AccessGroupRepository;
 use App\Repository\ParentDirectoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Filesystem;
@@ -35,6 +35,7 @@ class FilesController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly ParentDirectoryRepository $parentDirectoryRepository,
         private readonly Filesystem $defaultAdapter,
+        private readonly AccessGroupRepository $accessGroupRepository,
     ) {
     }
 
@@ -334,7 +335,7 @@ class FilesController extends AbstractController
                 $user = $this->getUser();
                 $parentDirectory = new ParentDirectory();
                 $parentDirectory->setName($name);
-                $parentDirectory->setOwnerRole($user->getFolderRole());
+                $parentDirectory->setOwnerRole($user->getAccessGroup());
                 $parentDirectory->setIsPublic(true);
                 $parentDirectory->setUserCreated($user);
 
@@ -491,7 +492,7 @@ class FilesController extends AbstractController
         // 2 possibilités : soit l'utilisateur est le créateur du dossier, soit le dossier est public et l'utilisateur a le role Conseil d'administration
         // Si ce n'est pas le cas, on redirige vers la page d'accueil
         if ($parentDir->getUserCreated() !== $user) {
-            if ($parentDir->isPublic() && RoleEnum::CONSEIL_ADMINISTRATION !== $user->getFolderRole()) {
+            if ($parentDir->isPublic() && $this->accessGroupRepository->getHighestRole() !== $user->getAccessGroup()) {
                 $this->addFlash('error', 'Vous n\'avez pas le droit de modifier les permissions de ce dossier.');
                 return $this->redirectToRoute('app_files_index');
             } elseif (!$parentDir->isPublic()) {
