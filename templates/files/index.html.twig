@@ -66,20 +66,24 @@
                         </td>
                         <td class="px-6 py-4">
                             <a href="{{ file.previewUrl }}" class="w-full h-full block">
-                                <div class="flex gap-1">
                                 {% if parentDir == null %}
                                     {% set parentDirectory = get_parent_dir(file.path) %}
                                 {% else %}
                                     {% set parentDirectory = parentDir %}
                                 {% endif %}
-                                {% for parentRole in parentDirectory.ownerRole.getHigherRoles() %}
-                                    <img class="w-6 h-6" title="{{ parentRole.value }}" src="https://ui-avatars.com/api/?name={{ parentRole.value  }}" alt="">
-                                {% endfor %}
-                                <img class="w-6 h-6" title="{{ parentDirectory.ownerRole.value }}" src="https://ui-avatars.com/api/?name={{ parentDirectory.ownerRole.value }}" alt="">
-                                {% for permission in parentDirectory.parentDirectoryPermissions %}
-                                    <img class="w-6 h-6" title="{{ permission.role.value }}" src="https://ui-avatars.com/api/?name={{ permission.role.value  }}" alt="">
-                                {% endfor %}
-                            </div>
+                                {% if parentDirectory.public %}
+                                    <div class="flex gap-1">
+                                        {% for parentRole in parentDirectory.ownerRole.getHigherRoles() %}
+                                            <img class="w-6 h-6" title="{{ parentRole.value }}" src="https://ui-avatars.com/api/?name={{ parentRole.value  }}" alt="">
+                                        {% endfor %}
+                                        <img class="w-6 h-6" title="{{ parentDirectory.ownerRole.value }}" src="https://ui-avatars.com/api/?name={{ parentDirectory.ownerRole.value }}" alt="">
+                                        {% for permission in parentDirectory.parentDirectoryPermissions %}
+                                            <img class="w-6 h-6" title="{{ permission.role.value }}" src="https://ui-avatars.com/api/?name={{ permission.role.value  }}" alt="">
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <p>Dossier privé</p>
+                                {% endif %}
                             </a>
                         </td>
                         <td class="px-6 py-4 flex gap-2 light:text-black links-total">
