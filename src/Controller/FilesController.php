@@ -8,6 +8,7 @@ use App\Entity\ParentDirectory;
 use App\Entity\User;
 use App\Form\CreateDirectoryType;
 use App\Form\FilePermissionType;
+use App\Form\MoveType;
 use App\Form\RenameType;
 use App\Form\UploadType;
 use App\Repository\AccessGroupRepository;
@@ -17,6 +18,7 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -32,9 +34,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class FilesController extends AbstractController
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        private readonly EntityManagerInterface    $entityManager,
         private readonly ParentDirectoryRepository $parentDirectoryRepository,
-        private readonly AccessGroupRepository $accessGroupRepository,
+        private readonly AccessGroupRepository     $accessGroupRepository, private readonly Filesystem $filesystem,
     ) {
     }
 
@@ -469,4 +471,109 @@ class FilesController extends AbstractController
             'form' => $form->createView(),
         ]);
     }
+
+    /**
+     * @throws FilesystemException
+     */
+    #[Route('/move', name: 'move')]
+    #[IsGranted('ROLE_USER')]
+    public function move(#[MapQueryParameter('path')] string $path, Request $request): Response
+    {
+        $path = $this->normalizePath($path);
+
+        $realPath = explode('/', $path);
+        $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
+
+        if (null === $parentDir || !$this->isGranted('file_write', $parentDir)) {
+            throw $this->createNotFoundException("Vous n'avez pas le droit de déplacer ce fichier !");
+        }
+        $fileInfo = [];
+
+        if ($this->filesystem->fileExists($path)) {
+            $fileInfo['type'] = 'file';
+        } else if ($this->filesystem->directoryExists($path)) {
+            $fileInfo['type'] = 'directory';
+        } else {
+            throw $this->createNotFoundException("Ce fichier ou dossier n'existe pas !");
+        }
+
+        $newPath = [
+            'path' => '/' . $this->normalizePath(dirname($path)),
+        ];
+
+        $form = $this->createForm(MoveType::class, $newPath);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data = $form->getData();
+
+            $newPath = $this->normalizePath($data['path']);
+
+            $redirectPath = $newPath;
+
+            if ($fileInfo['type'] === 'file') {
+                $redirectPath = $this->normalizePath($newPath);
+
+                if ($redirectPath === "") {
+                    $form->addError(new FormError("Tu ne peux pas déplacer ce fichier à la racine !"));
+
+                    return $this->render('files/move.html.twig', [
+                        'form' => $form->createView(),
+                        'path' => $path,
+                        'fileinfo' => $fileInfo,
+                    ]);
+                }
+
+                if ($this->filesystem->fileExists($newPath)) {
+                    $form->addError(new FormError("Un fichier du même nom existe déjà !"));
+
+                    return $this->render('files/move.html.twig', [
+                        'form' => $form->createView(),
+                        'path' => $path,
+                        'fileinfo' => $fileInfo,
+                    ]);
+                }
+
+                $name = explode('/', $newPath)[0];
+                $parentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => $name]);
+
+                if ($parentDirectory && !$this->isGranted('file_write', $parentDirectory)) {
+                    $form->addError(new FormError("Vous n'avez pas le droit de déplacer ce fichier dans ce dossier !"));
+
+                    return $this->render('files/move.html.twig', [
+                        'form' => $form->createView(),
+                        'path' => $path,
+                        'fileinfo' => $fileInfo,
+                    ]);
+                } elseif (null === $parentDirectory) {
+                    /**
+                     * @var User $user
+                     */
+                    $user = $this->getUser();
+                    $parentDirectory = new ParentDirectory();
+                    $parentDirectory->setName($name);
+                    $parentDirectory->setOwnerRole($user->getAccessGroup());
+                    $parentDirectory->setIsPublic(true);
+                    $parentDirectory->setUserCreated($user);
+                    $this->entityManager->persist($parentDirectory);
+                    $this->entityManager->flush();
+                }
+
+
+                $this->filesystem->move($path, $newPath . '/' . basename($path));
+            }
+
+            return $this->redirectToRoute('app_files_index', [
+                'path' => $redirectPath,
+            ]);
+        }
+
+        return $this->render('files/move.html.twig', [
+            'form' => $form->createView(),
+            'path' => $path,
+            'fileinfo' => $fileInfo,
+        ]);
+    }
 }
+

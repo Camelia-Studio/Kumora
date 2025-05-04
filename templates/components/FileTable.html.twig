@@ -143,6 +143,9 @@
                                 <a title="Permet de renommer le fichier" href="{{ path('app_files_rename', {
                                     path: file.path
                                 }) }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" /></a>
+                                <a title="Permet de déplacer le fichier" href="{{ path('app_files_move', {
+                                    path: file.path
+                                }) }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="mdi:file-move" /></a>
                                 <a title="Permet de supprimer le fichier" href="{{
                                 path('app_files_delete', {
                                     filename: file.path
