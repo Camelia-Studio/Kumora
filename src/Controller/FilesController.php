@@ -30,20 +30,19 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/files', 'app_files_')]
 class FilesController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface    $entityManager,
         private readonly ParentDirectoryRepository $parentDirectoryRepository,
-        private readonly AccessGroupRepository     $accessGroupRepository, private readonly Filesystem $filesystem,
+        private readonly AccessGroupRepository     $accessGroupRepository,
+        private readonly Filesystem $filesystem,
     ) {
     }
-
     /**
      * @throws FilesystemException
      */
-    #[Route('/', name: 'index')]
+    #[Route('/files/', name: 'app_files_index')]
     #[IsGranted('ROLE_USER')]
     public function index(UrlGeneratorInterface $urlGenerator, #[MapQueryParameter('path')] string $path = ''): Response
     {
@@ -51,11 +50,10 @@ class FilesController extends AbstractController
             'path' => $this->normalizePath($path),
         ]);
     }
-
     /**
      * @throws FilesystemException
      */
-    #[Route('/file-proxy', name: 'app_file_proxy')]
+    #[Route('/files/file-proxy', name: 'app_files_proxy')]
     public function fileProxy(Filesystem $defaultAdapter, #[MapQueryParameter('filename')] string $filename, #[MapQueryParameter('preview')] bool $preview)
     {
         $file = $this->normalizePath($filename);
@@ -94,11 +92,10 @@ class FilesController extends AbstractController
 
         return $response;
     }
-
     /**
      * @throws FilesystemException
      */
-    #[Route('/file-delete', name: 'delete')]
+    #[Route('/files/file-delete', name: 'app_files_delete')]
     #[IsGranted('ROLE_USER')]
     public function fileDelete(Filesystem $defaultAdapter, #[MapQueryParameter('filename')] string $filename): RedirectResponse
     {
@@ -128,11 +125,10 @@ class FilesController extends AbstractController
             'path' => dirname($file),
         ]);
     }
-
     /**
      * @throws FilesystemException
      */
-    #[Route('/directory-delete', name: 'delete_directory')]
+    #[Route('/files/directory-delete', name: 'app_files_delete_directory')]
     #[IsGranted('ROLE_USER')]
     public function directoryDelete(Filesystem $defaultAdapter, #[MapQueryParameter('path')] string $path): RedirectResponse
     {
@@ -168,11 +164,10 @@ class FilesController extends AbstractController
             'path' => $newPath,
         ]);
     }
-
     /**
      * @throws FilesystemException
      */
-    #[Route('/rename', name: 'rename')]
+    #[Route('/files/rename', name: 'app_files_rename')]
     #[IsGranted('ROLE_USER')]
     public function rename(#[MapQueryParameter('path')] string $filepath, Request $request, Filesystem $defaultAdapter): Response
     {
@@ -222,11 +217,10 @@ class FilesController extends AbstractController
             'type' => 'fichier',
         ]);
     }
-
     /**
      * @throws FilesystemException
      */
-    #[Route('/create-directory', name: 'create_directory')]
+    #[Route('/files/create-directory', name: 'app_files_create_directory')]
     #[IsGranted('ROLE_USER')]
     public function createDirectory(Request $request, Filesystem $defaultAdapter, #[MapQueryParameter('base')] string $basePath): Response
     {
@@ -292,11 +286,10 @@ class FilesController extends AbstractController
             'basePath' => $basePath,
         ]);
     }
-
     /**
      * @throws FilesystemException
      */
-    #[Route('/rename-directory', name: 'rename-directory')]
+    #[Route('/files/rename-directory', name: 'app_files_rename-directory')]
     #[IsGranted('ROLE_USER')]
     public function renameDirectory(#[MapQueryParameter('path')] string $filepath, Request $request, Filesystem $defaultAdapter): Response
     {
@@ -349,11 +342,10 @@ class FilesController extends AbstractController
             'type' => 'dossier',
         ]);
     }
-
     /**
      * @throws FilesystemException
      */
-    #[Route('/upload', name: 'upload')]
+    #[Route('/files/upload', name: 'app_files_upload')]
     #[IsGranted('ROLE_USER')]
     public function upload(#[MapQueryParameter('path')] string $path, Request $request, Filesystem $defaultAdapter): Response
     {
@@ -404,7 +396,6 @@ class FilesController extends AbstractController
             'path' => $path,
         ]);
     }
-
     private function normalizePath(string $path): string
     {
         // On retire les slashs en début et fin de chaîne
@@ -416,8 +407,7 @@ class FilesController extends AbstractController
 
         return str_replace('//', '/', $path);
     }
-
-    #[Route('/file-edit-permission/{parentDir}', name: 'file_edit_permission')]
+    #[Route('/files/file-edit-permission/{parentDir}', name: 'app_files_file_edit_permission')]
     #[IsGranted('ROLE_USER')]
     public function fileRead(#[MapEntity(mapping: ['parentDir' => 'name'])] ParentDirectory $parentDir, Request $request): Response
     {
@@ -471,11 +461,10 @@ class FilesController extends AbstractController
             'form' => $form->createView(),
         ]);
     }
-
     /**
      * @throws FilesystemException
      */
-    #[Route('/move', name: 'move')]
+    #[Route('/files/move', name: 'app_files_move')]
     #[IsGranted('ROLE_USER')]
     public function move(#[MapQueryParameter('path')] string $path, Request $request): Response
     {
@@ -491,7 +480,7 @@ class FilesController extends AbstractController
 
         if ($this->filesystem->fileExists($path)) {
             $fileInfo['type'] = 'file';
-        } else if ($this->filesystem->directoryExists($path)) {
+        } elseif ($this->filesystem->directoryExists($path)) {
             $fileInfo['type'] = 'directory';
         } else {
             throw $this->createNotFoundException("Ce fichier ou dossier n'existe pas !");
@@ -512,8 +501,8 @@ class FilesController extends AbstractController
 
             $redirectPath = $this->normalizePath($newPath);
 
-            if ($fileInfo['type'] === 'file') {
-                if ($redirectPath === "") {
+            if ('file' === $fileInfo['type']) {
+                if ("" === $redirectPath) {
                     $form->addError(new FormError("Tu ne peux pas déplacer ce fichier à la racine !"));
 
                     return $this->render('files/move.html.twig', [
@@ -536,7 +525,7 @@ class FilesController extends AbstractController
                 $name = explode('/', $newPath)[0];
                 $parentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => $name]);
 
-                if ($parentDirectory && !$this->isGranted('file_write', $parentDirectory)) {
+                if ($parentDirectory instanceof ParentDirectory && !$this->isGranted('file_write', $parentDirectory)) {
                     $form->addError(new FormError("Vous n'avez pas le droit de déplacer ce fichier dans ce dossier !"));
 
                     return $this->render('files/move.html.twig', [
@@ -558,10 +547,8 @@ class FilesController extends AbstractController
                     $this->entityManager->flush();
                 }
 
-
                 $this->filesystem->move($path, $newPath . '/' . basename($path));
             } else {
-
                 // Si le dossier existe déjà, on envoie une erreur
                 if ($this->filesystem->directoryExists($newPath . '/' . basename($path))) {
                     $form->addError(new FormError("Un dossier du même nom existe déjà !"));
@@ -576,7 +563,7 @@ class FilesController extends AbstractController
                 $name = explode('/', $this->normalizePath($newPath . '/' . basename($path)))[0];
                 $parentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => $name]);
 
-                if ($parentDirectory && !$this->isGranted('file_write', $parentDirectory)) {
+                if ($parentDirectory instanceof ParentDirectory && !$this->isGranted('file_write', $parentDirectory)) {
                     $form->addError(new FormError("Vous n'avez pas le droit de déplacer ce dossier dans ce dossier !"));
 
                     return $this->render('files/move.html.twig', [
@@ -620,4 +607,3 @@ class FilesController extends AbstractController
         ]);
     }
 }
-

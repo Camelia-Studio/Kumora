@@ -15,8 +15,6 @@ class ParentDirectoryPermission
     #[ORM\Column]
     private ?int $id = null;
 
-
-
     #[ORM\ManyToOne(inversedBy: 'users')]
     private ?AccessGroup $role = null;
 

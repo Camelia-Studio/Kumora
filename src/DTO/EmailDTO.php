@@ -8,7 +8,4 @@ class EmailDTO
 {
     public string $email;
     public string $password;
-    public function __construct(
-    ) {
-    }
 }

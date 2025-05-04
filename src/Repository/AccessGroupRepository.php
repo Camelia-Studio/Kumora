@@ -40,7 +40,6 @@ class AccessGroupRepository extends ServiceEntityRepository
         }
 
         return $accessGroup;
-
     }
 
     public function getHigherRoles(?AccessGroup $getOwnerRole): array

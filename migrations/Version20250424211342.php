@@ -21,27 +21,27 @@ final class Version20250424211342 extends AbstractMigration
     {
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql(<<<'SQL'
-            ALTER TABLE access_group ADD COLUMN image VARCHAR(255) DEFAULT NULL
-        SQL);
+                ALTER TABLE access_group ADD COLUMN image VARCHAR(255) DEFAULT NULL
+            SQL);
     }
 
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql(<<<'SQL'
-            CREATE TEMPORARY TABLE __temp__access_group AS SELECT id, name, position FROM access_group
-        SQL);
+                CREATE TEMPORARY TABLE __temp__access_group AS SELECT id, name, position FROM access_group
+            SQL);
         $this->addSql(<<<'SQL'
-            DROP TABLE access_group
-        SQL);
+                DROP TABLE access_group
+            SQL);
         $this->addSql(<<<'SQL'
-            CREATE TABLE access_group (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name VARCHAR(255) NOT NULL, position INTEGER NOT NULL)
-        SQL);
+                CREATE TABLE access_group (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name VARCHAR(255) NOT NULL, position INTEGER NOT NULL)
+            SQL);
         $this->addSql(<<<'SQL'
-            INSERT INTO access_group (id, name, position) SELECT id, name, position FROM __temp__access_group
-        SQL);
+                INSERT INTO access_group (id, name, position) SELECT id, name, position FROM __temp__access_group
+            SQL);
         $this->addSql(<<<'SQL'
-            DROP TABLE __temp__access_group
-        SQL);
+                DROP TABLE __temp__access_group
+            SQL);
     }
 }

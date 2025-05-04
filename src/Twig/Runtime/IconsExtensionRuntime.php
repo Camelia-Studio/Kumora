@@ -8,11 +8,7 @@ use Twig\Extension\RuntimeExtensionInterface;
 
 class IconsExtensionRuntime implements RuntimeExtensionInterface
 {
-    public function __construct()
-    {
-    }
-
-    public function getIcons(string $filename):string
+    public function getIcons(string $filename): string
     {
         $extension = pathinfo($filename, PATHINFO_EXTENSION);
 

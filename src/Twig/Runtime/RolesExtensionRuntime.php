@@ -25,7 +25,6 @@ class RolesExtensionRuntime implements RuntimeExtensionInterface
         return $this->accessGroupRepository->getHighestRole();
     }
 
-
     public function getLowestRole(): AccessGroup
     {
         return $this->accessGroupRepository->getLowestRole();

@@ -17,7 +17,6 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_ADMIN')]
-#[Route('/admin', name: 'app_admin_')]
 class AdminController extends AbstractController
 {
     public function __construct(
@@ -27,13 +26,13 @@ class AdminController extends AbstractController
     ) {
     }
 
-    #[Route('/', name: 'index')]
+    #[Route('/admin/', name: 'app_admin_index')]
     public function index(): Response
     {
         return $this->render('admin/index.html.twig');
     }
 
-    #[Route('/users', name: 'user_index')]
+    #[Route('/admin/users', name: 'app_admin_user_index')]
     public function indexUsers(): Response
     {
         $users = $this->userRepository->findAll();
@@ -42,8 +41,8 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/users/create', name: 'user_create')]
-    #[Route('/users/edit/{user}', name: 'user_edit')]
+    #[Route('/admin/users/create', name: 'app_admin_user_create')]
+    #[Route('/admin/users/edit/{user}', name: 'app_admin_user_edit')]
     public function editUsers(#[MapEntity(id: 'user')] ?User $user, Request $request): Response
     {
         $isNew = false;
@@ -79,7 +78,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/users/delete/{user}', name: 'user_delete')]
+    #[Route('/admin/users/delete/{user}', name: 'app_admin_user_delete')]
     public function deleteUser(#[MapEntity(id: 'user')] User $user): Response
     {
         $this->entityManager->remove($user);

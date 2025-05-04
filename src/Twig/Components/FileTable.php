@@ -17,18 +17,16 @@ use Symfony\UX\LiveComponent\DefaultActionTrait;
 #[AsLiveComponent]
 final class FileTable
 {
+    use DefaultActionTrait;
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly Filesystem $defaultAdapter,
         private readonly ParentDirectoryRepository $parentDirectoryRepository,
         private readonly Security $security,
-    )
-    {
+    ) {
     }
 
-    use DefaultActionTrait;
-
-    #[LiveProp(writable: true, onUpdated: 'getFiles',url: true)]
+    #[LiveProp(writable: true, onUpdated: 'getFiles', url: true)]
     public string $path = '';
 
     public ?ParentDirectory $parentDir = null;
@@ -44,7 +42,7 @@ final class FileTable
 
             $this->parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $pathExploded[0]]);
 
-            if (null === $this->parentDir || !$this->defaultAdapter->directoryExists($this->path)) {
+            if (!$this->parentDir instanceof \App\Entity\ParentDirectory || !$this->defaultAdapter->directoryExists($this->path)) {
                 $this->path = '';
                 return [];
             }
@@ -84,10 +82,10 @@ final class FileTable
                     'last_modified' => $file['lastModified'],
                     'size' => $file['fileSize'] ?? $this->calculateSize($file),
                     'url' => 'file' === $file['type']
-                        ? $this->urlGenerator->generate('app_files_app_file_proxy', ['filename' => $file['path'], 'preview' => false], UrlGeneratorInterface::ABSOLUTE_URL)
+                        ? $this->urlGenerator->generate('app_files_proxy', ['filename' => $file['path'], 'preview' => false], UrlGeneratorInterface::ABSOLUTE_URL)
                         : $this->urlGenerator->generate('app_files_index', ['path' => $file['path']]),
                     'previewUrl' => 'file' === $file['type']
-                        ? $this->urlGenerator->generate('app_files_app_file_proxy', ['filename' => $file['path'], 'preview' => true], UrlGeneratorInterface::ABSOLUTE_URL)
+                        ? $this->urlGenerator->generate('app_files_proxy', ['filename' => $file['path'], 'preview' => true], UrlGeneratorInterface::ABSOLUTE_URL)
                         : $this->urlGenerator->generate('app_files_index', ['path' => $file['path']]),
                 ];
             }
@@ -103,7 +101,6 @@ final class FileTable
 
         return $realFiles;
     }
-
 
     private function normalizePath(string $path): string
     {
@@ -128,8 +125,8 @@ final class FileTable
 
         $size = 0;
 
-        foreach ($files as $file) {
-            $size += $file['fileSize'] ?? 0;
+        foreach ($files as $fil) {
+            $size += $fil['fileSize'] ?? 0;
         }
 
         return $size;

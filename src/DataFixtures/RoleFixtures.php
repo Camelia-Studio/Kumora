@@ -22,7 +22,6 @@ class RoleFixtures extends Fixture
             ->setPosition(100)
         ;
 
-
         $manager->persist($conseilAdmin);
         $manager->persist($visiteur);
         $manager->flush();
