@@ -51,7 +51,7 @@
                         <td class="px-6 py-4 font-medium light:text-gray-900 whitespace-nowrap cursor-pointer">
                             <a href="{{ file.previewUrl }}" class="flex gap-2 items-center w-full h-full duration-300 group-[:hover:not(:has(.links-total:hover))]:text-blue-900  dark:group-[:hover:not(:has(.links-total:hover))]:text-blue-700">
                                 {% if file.type == 'file' %}
-                                    <twig:ux:icon name="line-md:file-filled" class="w-6 h-6" />
+                                    <twig:ux:icon name="{{ getIcons(file.path|basename) }}" class="w-6 h-6" />
                                 {% else %}
                                     <twig:ux:icon name="line-md:folder-filled" class="w-6 h-6" />
                                 {% endif %}
