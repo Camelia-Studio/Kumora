@@ -510,11 +510,9 @@ class FilesController extends AbstractController
 
             $newPath = $this->normalizePath($data['path']);
 
-            $redirectPath = $newPath;
+            $redirectPath = $this->normalizePath($newPath);
 
             if ($fileInfo['type'] === 'file') {
-                $redirectPath = $this->normalizePath($newPath);
-
                 if ($redirectPath === "") {
                     $form->addError(new FormError("Tu ne peux pas déplacer ce fichier à la racine !"));
 
@@ -525,7 +523,7 @@ class FilesController extends AbstractController
                     ]);
                 }
 
-                if ($this->filesystem->fileExists($newPath)) {
+                if ($this->filesystem->fileExists($newPath . '/' . basename($path))) {
                     $form->addError(new FormError("Un fichier du même nom existe déjà !"));
 
                     return $this->render('files/move.html.twig', [
@@ -562,6 +560,51 @@ class FilesController extends AbstractController
 
 
                 $this->filesystem->move($path, $newPath . '/' . basename($path));
+            } else {
+
+                // Si le dossier existe déjà, on envoie une erreur
+                if ($this->filesystem->directoryExists($newPath . '/' . basename($path))) {
+                    $form->addError(new FormError("Un dossier du même nom existe déjà !"));
+
+                    return $this->render('files/move.html.twig', [
+                        'form' => $form->createView(),
+                        'path' => $path,
+                        'fileinfo' => $fileInfo,
+                    ]);
+                }
+
+                $name = explode('/', $newPath)[0];
+
+                $parentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => $name]);
+
+                if ($parentDirectory && !$this->isGranted('file_write', $parentDirectory)) {
+                    $form->addError(new FormError("Vous n'avez pas le droit de déplacer ce dossier dans ce dossier !"));
+
+                    return $this->render('files/move.html.twig', [
+                        'form' => $form->createView(),
+                        'path' => $path,
+                        'fileinfo' => $fileInfo,
+                    ]);
+                } elseif (null === $parentDirectory) {
+                    /**
+                     * @var User $user
+                     */
+                    $user = $this->getUser();
+                    $parentDirectory = new ParentDirectory();
+                    $parentDirectory->setName($name);
+                    $parentDirectory->setOwnerRole($user->getAccessGroup());
+                    $parentDirectory->setIsPublic(true);
+                    $parentDirectory->setUserCreated($user);
+                    $this->entityManager->persist($parentDirectory);
+                    $this->entityManager->flush();
+                }
+
+                $this->filesystem->move($path, $newPath . '/' . basename($path));
+
+                if ($parentDir->getName() === $path) {
+                    $this->entityManager->remove($parentDir);
+                    $this->entityManager->flush();
+                }
             }
 
             return $this->redirectToRoute('app_files_index', [

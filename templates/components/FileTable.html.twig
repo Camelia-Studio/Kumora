@@ -153,13 +153,13 @@
                                 }}" class="hover:text-red-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
                             {% endif %}
                         {% else %}
-                            {% if parentDir == null %}
+                            {% if this.parentDir == null %}
                                 {% set parentDirectory = get_parent_dir(file.path) %}
                             {% else %}
-                                {% set parentDirectory = parentDir %}
+                                {% set parentDirectory = this.parentDir %}
                             {% endif %}
 
-                            {% if parentDir == null and (parentDirectory.userCreated == app.user or (parentDirectory.isPublic and app.user.accessGroup == getHighestRole())) %}
+                            {% if this.parentDir == null and (parentDirectory.userCreated == app.user or (parentDirectory.isPublic and app.user.accessGroup == getHighestRole())) %}
                                 <a href="{{ path('app_files_file_edit_permission', {
                                     parentDir: parentDirectory.name,
                                 }) }}" class="hover:text-yellow-400 duration-300" title="Permet de modifier les permissions du dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:shield" /></a>
@@ -168,6 +168,9 @@
                                 <a href="{{ path('app_files_rename-directory', {
                                     path: file.path
                                 }) }}" class="hover:text-blue-700 duration-300" title="Permet de renommer le dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" /></a>
+                                <a title="Permet de déplacer le dossier" href="{{ path('app_files_move', {
+                                    path: file.path
+                                }) }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="mdi:folder-move" /></a>
                                 <a href="{{ path('app_files_delete_directory', {
                                     path: file.path
                                 }) }}" class="hover:text-red-700 duration-300" title="Permet de supprimer le dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
