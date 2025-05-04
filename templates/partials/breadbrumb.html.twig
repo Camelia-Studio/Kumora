@@ -1,10 +1,13 @@
 <nav class="flex" aria-label="Breadcrumb">
     <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse {{ path == '' ? 'my-1' : '' }}">
         <li class="flex items-center">
-            <a href="{{ path('app_files_index') }}"
-               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+            <button  type="button"
+                data-model="path"
+                data-value="/"
+                data-action="live#update"
+               class="cursor-pointer inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
                 <twig:ux:icon class="w-3 h-3" name="fa6-solid:house"/>
-            </a>
+            </button>
         </li>
         {% if path != '' %}
             {% set pathSplitted = path|split('/') %}
@@ -24,8 +27,11 @@
                         <div class="flex items-center">
                             <twig:ux:icon class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1"
                                           name="fa6-solid:chevron-right"/>
-                            <a href="{{ path('app_files_index', {path: base}) }}"
-                               class="ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white">{{ pa }}</a>
+                            <button type="button"
+                                    data-model="path"
+                                    data-value="{{ base }}"
+                                    data-action="live#update"
+                               class="ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white cursor-pointer">{{ pa }}</button>
                         </div>
                     </li>
                 {% endif %}

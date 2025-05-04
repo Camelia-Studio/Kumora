@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * Returns the importmap for this application.
  *
@@ -39,5 +37,8 @@ return [
     'flowbite/dist/flowbite.min.css' => [
         'version' => '2.5.2',
         'type' => 'css',
+    ],
+    '@symfony/ux-live-component' => [
+        'path' => './vendor/symfony/ux-live-component/assets/dist/live_controller.js',
     ],
 ];

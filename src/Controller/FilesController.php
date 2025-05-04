@@ -34,7 +34,6 @@ class FilesController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ParentDirectoryRepository $parentDirectoryRepository,
-        private readonly Filesystem $defaultAdapter,
         private readonly AccessGroupRepository $accessGroupRepository,
     ) {
     }
@@ -46,72 +45,8 @@ class FilesController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function index(UrlGeneratorInterface $urlGenerator, #[MapQueryParameter('path')] string $path = ''): Response
     {
-        $path = $this->normalizePath($path);
-        $this->getUser();
-        if ('' !== $path) {
-            $pathExploded = explode('/', $path);
-
-            $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $pathExploded[0]]);
-
-            if (null === $parentDir || !$this->defaultAdapter->directoryExists($path)) {
-                throw $this->createNotFoundException("Ce dossier n'existe pas !");
-            }
-
-            if (!$this->isGranted('file_read', $parentDir)) {
-                throw $this->createNotFoundException("Vous n'avez pas le droit d'accéder à ce dossier !");
-            }
-        }
-
-        $files = $this->defaultAdapter->listContents('/' . $path);
-
-        $realFiles = [];
-
-        foreach ($files as $file) {
-            $filename = basename((string) $file['path']);
-            if (!str_starts_with($filename, '.')) {
-                // On vérifie si l'utilisateur a le droit d'accéder au fichier (vérifier que owner_role du parentDirectory correspondant est bien le folderRole de l'utilisateur)
-                $pathFile = explode('/', (string) $file['path']);
-                if ('' !== $path) {
-                    $parentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => $pathFile[0]]);
-
-                    if (null === $parentDirectory || !$this->isGranted('file_read', $parentDirectory)) {
-                        continue;
-                    }
-                } elseif ('file' !== $file['type']) {
-                    $parentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => $filename]);
-
-                    if (null === $parentDirectory || !$this->isGranted('file_read', $parentDirectory)) {
-                        continue;
-                    }
-                }
-
-                $realFiles[] = [
-                    'type' => $file['type'],
-                    'path' => $file['path'],
-                    'last_modified' => $file['lastModified'],
-                    'size' => $file['fileSize'] ?? $this->calculateSize($file),
-                    'url' => 'file' === $file['type']
-                        ? $this->generateUrl('app_files_app_file_proxy', ['filename' => $file['path'], 'preview' => false], UrlGeneratorInterface::ABSOLUTE_URL)
-                        : $this->generateUrl('app_files_index', ['path' => $file['path']]),
-                    'previewUrl' => 'file' === $file['type']
-                        ? $this->generateUrl('app_files_app_file_proxy', ['filename' => $file['path'], 'preview' => true], UrlGeneratorInterface::ABSOLUTE_URL)
-                        : $this->generateUrl('app_files_index', ['path' => $file['path']]),
-                ];
-            }
-        }
-
-        // On trie par type puis par nom
-        usort($realFiles, static function ($a, $b) {
-            if ($a['type'] === $b['type']) {
-                return $a['path'] <=> $b['path'];
-            }
-            return $a['type'] <=> $b['type'];
-        });
-
         return $this->render('files/index.html.twig', [
-            'files' => $realFiles,
-            'path' => $path,
-            'parentDir' => $parentDir ?? null,
+            'path' => $this->normalizePath($path),
         ]);
     }
 
@@ -533,20 +468,5 @@ class FilesController extends AbstractController
             'parentDir' => $parentDir,
             'form' => $form->createView(),
         ]);
-    }
-
-    private function calculateSize($file): int
-    {
-        $folderPath = $file['path'];
-        // On récupère tout les fichiers dans le dossier
-        $files = $this->defaultAdapter->listContents($folderPath, true);
-
-        $size = 0;
-
-        foreach ($files as $file) {
-            $size += $file['fileSize'] ?? 0;
-        }
-
-        return $size;
     }
 }

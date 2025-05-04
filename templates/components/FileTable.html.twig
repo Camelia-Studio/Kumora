@@ -1,0 +1,179 @@
+<div{{ attributes }}>
+    {% if this.parentDir == null or (this.parentDir != null and is_granted('file_write', this.parentDir)) %}
+        <div class="flex justify-end">
+            <a href="{{ path('app_files_create_directory', {
+                base: path
+            }) }}" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-hidden dark:focus:ring-blue-800">Créer un dossier</a>
+            {% if path != '' %}
+                <a href="{{ path('app_files_upload', {
+                    path: path
+                }) }}" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-hidden dark:focus:ring-blue-800">Ajouter des fichiers</a>
+            {% endif %}
+        </div>
+    {% endif %}
+    <div class="mt-4">
+        {% include 'partials/breadbrumb.html.twig' %}
+    </div>
+
+
+
+    <div class="relative overflow-x-auto mt-4">
+        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <tr>
+                <th scope="col" class="px-6 py-3">
+                    Nom
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Taille
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Modifié le
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Groupes d'accès
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Actions
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for file in this.files %}
+                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 group">
+                    {% if file.type == 'file' %}
+                        <td class="px-6 py-4 font-medium light:text-gray-900 whitespace-nowrap cursor-pointer">
+                            <a  href="{{ file.previewUrl }}" target="_blank" class="flex gap-2 items-center w-full h-full duration-300 group-[:hover:not(:has(.links-total:hover))]:text-blue-900  dark:group-[:hover:not(:has(.links-total:hover))]:text-blue-700">
+                                {% if file.type == 'file' %}
+                                    <twig:ux:icon name="{{ getIcons(file.path|basename) }}" class="w-6 h-6" />
+                                {% else %}
+                                    <twig:ux:icon name="line-md:folder-filled" class="w-6 h-6" />
+                                {% endif %}
+                                {{ file.path|basename }}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="{{ file.previewUrl }}" target="_blank" class="w-full h-full block">{{ file.size|show_size }}</a>
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="{{ file.previewUrl }}" target="_blank" class="w-full h-full block">{{ file.last_modified|time_diff }}</a>
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="{{ file.previewUrl }}" target="_blank" class="w-full h-full block">
+                                {% if this.parentDir == null %}
+                                    {% set parentDirectory = get_parent_dir(file.path) %}
+                                {% else %}
+                                    {% set parentDirectory = this.parentDir %}
+                                {% endif %}
+                                {% if parentDirectory.public %}
+                                    <div class="flex gap-1">
+                                        {% for parentRole in getHigherRoles(parentDirectory.ownerRole) %}
+                                            <img class="w-6 h-6" title="{{ parentRole.name }}" src="{{ parentRole.image ?? ('https://ui-avatars.com/api/?name=' ~ parentRole.name) }}" alt="">
+                                        {% endfor %}
+                                        {% if parentDirectory.ownerRole is not null %}
+                                            <img class="w-6 h-6" title="{{ parentDirectory.ownerRole.name }}" src="{{ parentDirectory.ownerRole.image ?? ('https://ui-avatars.com/api/?name=' ~ parentDirectory.ownerRole.name) }}" alt="">
+                                        {% endif %}
+                                        {% for permission in parentDirectory.parentDirectoryPermissions %}
+                                            <img class="w-6 h-6" title="{{ permission.role.name }}" src="{{ parentDirectory.ownerRole.image ?? ('https://ui-avatars.com/api/?name=' ~ permission.role.name) }}" alt="">
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p>Dossier privé</p>
+                                {% endif %}
+                            </a>
+                        </td>
+                    {% else %}
+                        <td class="px-6 py-4 font-medium light:text-gray-900 whitespace-nowrap cursor-pointer">
+                            <button
+                                    type="button"
+                                    data-model="path"
+                                    data-value="{{ file.path }}"
+                                    data-action="live#update"
+                                    class="flex gap-2 items-center w-full h-full duration-300 group-[:hover:not(:has(.links-total:hover))]:text-blue-900  dark:group-[:hover:not(:has(.links-total:hover))]:text-blue-700 cursor-pointer">
+                                <twig:ux:icon name="line-md:folder-filled" class="w-6 h-6" />
+                                {{ file.path|basename }}
+                            </button>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button type="button"
+                                    data-model="path"
+                                    data-value="{{ file.path }}"
+                                    data-action="live#update" class="text-left h-full w-full cursor-pointer">{{ file.size|show_size }}</button>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button type="button"
+                               data-model="path"
+                               data-value="{{ file.path }}"
+                               data-action="live#update" class="text-left h-full w-full cursor-pointer">{{ file.last_modified|time_diff }}</button>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button type="button"
+                               data-model="path"
+                               data-value="{{ file.path }}"
+                               data-action="live#update" class="text-left h-full w-full cursor-pointer">
+                                {% if this.parentDir == null %}
+                                    {% set parentDirectory = get_parent_dir(file.path) %}
+                                {% else %}
+                                    {% set parentDirectory = this.parentDir %}
+                                {% endif %}
+                                {% if parentDirectory.public %}
+                                    <div class="flex gap-1">
+                                        {% for parentRole in getHigherRoles(parentDirectory.ownerRole) %}
+                                            <img class="w-6 h-6" title="{{ parentRole.name }}" src="{{ parentRole.image ?? ('https://ui-avatars.com/api/?name=' ~ parentRole.name) }}" alt="">
+                                        {% endfor %}
+                                        {% if parentDirectory.ownerRole is not null %}
+                                            <img class="w-6 h-6" title="{{ parentDirectory.ownerRole.name }}" src="{{ parentDirectory.ownerRole.image ?? ('https://ui-avatars.com/api/?name=' ~ parentDirectory.ownerRole.name) }}" alt="">
+                                        {% endif %}
+                                        {% for permission in parentDirectory.parentDirectoryPermissions %}
+                                            <img class="w-6 h-6" title="{{ permission.role.name }}" src="{{ parentDirectory.ownerRole.image ?? ('https://ui-avatars.com/api/?name=' ~ permission.role.name) }}" alt="">
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p>Dossier privé</p>
+                                {% endif %}
+                            </button>
+                        </td>
+                    {% endif %}
+                    <td class="px-6 py-4 flex gap-2 light:text-black links-total">
+                        {% if file.type == 'file' %}
+                            <a title="Permet de voir le fichier" href="{{ file.previewUrl }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:eye" /></a>
+                            <button title="Permet de copier le lien de prévisualisation du fichier" onclick="navigator.clipboard.writeText('{{ file.previewUrl }}'); alert('Lien copié avec succès !')"  class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6 cursor-pointer" name="fa6-solid:clipboard" /></button>
+                            <a title="Permet de télécharger le fichier" href="{{ file.url }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:download" /></a>
+                            {% if is_granted('file_write', parentDirectory) %}
+                                <a title="Permet de renommer le fichier" href="{{ path('app_files_rename', {
+                                    path: file.path
+                                }) }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" /></a>
+                                <a title="Permet de supprimer le fichier" href="{{
+                                path('app_files_delete', {
+                                    filename: file.path
+                                })
+                                }}" class="hover:text-red-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
+                            {% endif %}
+                        {% else %}
+                            {% if parentDir == null %}
+                                {% set parentDirectory = get_parent_dir(file.path) %}
+                            {% else %}
+                                {% set parentDirectory = parentDir %}
+                            {% endif %}
+
+                            {% if parentDir == null and (parentDirectory.userCreated == app.user or (parentDirectory.isPublic and app.user.accessGroup == getHighestRole())) %}
+                                <a href="{{ path('app_files_file_edit_permission', {
+                                    parentDir: parentDirectory.name,
+                                }) }}" class="hover:text-yellow-400 duration-300" title="Permet de modifier les permissions du dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:shield" /></a>
+                            {% endif %}
+                            {% if is_granted('file_write', parentDirectory) %}
+                                <a href="{{ path('app_files_rename-directory', {
+                                    path: file.path
+                                }) }}" class="hover:text-blue-700 duration-300" title="Permet de renommer le dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" /></a>
+                                <a href="{{ path('app_files_delete_directory', {
+                                    path: file.path
+                                }) }}" class="hover:text-red-700 duration-300" title="Permet de supprimer le dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
