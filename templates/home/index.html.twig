@@ -2,20 +2,39 @@
 
 {% block title %}Le disque nuagique de Camélia Studio{% endblock %}
 
-{% block body %}
-    <div class="min-h-96 flex items-center flex-col justify-center">
-        <img src="{{ get_env('DEFAULT_IMAGE') }}" alt="Mascotte Camélia Studio" class="max-w-96">
-        <h1 class="text-4xl font-bold mb-2 text-gray-900 dark:text-white">Bienvenue sur Kumora</h1>
-        <p class="text-xl text-gray-600 dark:text-gray-300 mb-8">Notre espace de stockage en ligne, dédié aux membres de Camélia Studio, pour faciliter le partage de tous les fichiers et ressources de l'association.</p>
-        <div class="mb-16">
-            <a href="{{ path('app_files_index') }}" class="text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-800 dark:text-white dark:border-gray-600 font-medium rounded-lg px-8 py-3">
-                Accéder à mon espace
-            </a>
-        </div>
-        <div class="mb-16 flex items-center justify-center gap-8">
-            <a target="_blank" href="{{ get_env('CAMELIA_URL') }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Camélia Studio</a>
-            <a target="_blank" href="{{ get_env('TSUBAKIMONO_URL') }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Tsubakimono</a>
-            <a target="_blank" href="{{ get_env('DISCORD_URL') }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Discord</a>
+{% block baseBody %}
+    <div class="w-full h-full flex-1 flex items-center justify-center relative">
+        <div class="absolute inset-0 bg-black/25"></div>
+        {% if is_granted('ROLE_ADMIN') %}
+            <div class="absolute top-8 right-8 rounded-full bg-black/80 p-2">
+                <a href="{{ path('app_admin_index') }}" class="" title="Accéder à l'administration">
+                    <twig:ux:icon name="bi:gear-fill" class=" w-8 h-8"/>
+                </a>
+            </div>
+        {% endif %}
+        <div class="bg-black/75 flex flex-col items-center justify-center rounded-xl max-w-4xl p-8 z-50">
+            <img src="{{ get_env('DEFAULT_IMAGE') }}" alt="Mascotte Camélia Studio" class="max-w-96">
+            <h1 class="text-4xl font-bold mb-2 text-gray-900 dark:text-white">Bienvenue sur Kumora</h1>
+            <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 text-center">Notre espace de stockage en ligne, dédié aux membres de Camélia Studio, pour faciliter le partage de tous les fichiers et ressources de l'association.</p>
+            <div class="mb-16">
+                <a href="{{ path('app_files_index') }}" class=" rounded-full py-4 px-6 bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium text-sm text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                    Accéder à mon espace
+                </a>
+            </div>
+            <div class="mt-4 flex items-center justify-center gap-8">
+                <a target="_blank" href="{{ get_env('CAMELIA_URL') }}" class="font-medium text-white hover:underline duration-200">Camélia Studio</a>
+                <a target="_blank" href="{{ get_env('TSUBAKIMONO_URL') }}" class="font-medium text-white hover:underline duration-200">Tsubakimono</a>
+                <a target="_blank" href="{{ get_env('DISCORD_URL') }}" class="font-medium text-white hover:underline duration-200">Discord</a>
+            </div>
         </div>
     </div>
+{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        body {
+            background: url('{{ get_env('HOME_WALLPAPER', 'https://cila.camelia-studio.org/ico/img_carrousel/mascotte_pellichi.jpg') }}') no-repeat center center fixed;
+            background-size: cover;
+        }
+    </style>
 {% endblock %}
