@@ -573,8 +573,7 @@ class FilesController extends AbstractController
                     ]);
                 }
 
-                $name = explode('/', $newPath)[0];
-
+                $name = explode('/', $this->normalizePath($newPath . '/' . basename($path)))[0];
                 $parentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => $name]);
 
                 if ($parentDirectory && !$this->isGranted('file_write', $parentDirectory)) {
@@ -605,6 +604,8 @@ class FilesController extends AbstractController
                     $this->entityManager->remove($parentDir);
                     $this->entityManager->flush();
                 }
+
+                $redirectPath = $this->normalizePath($newPath . '/' . basename($path));
             }
 
             return $this->redirectToRoute('app_files_index', [
