@@ -6,9 +6,13 @@
     <div class="min-h-96 flex items-center flex-col justify-center">
         <h1 class="text-4xl font-bold mb-2 text-gray-900 dark:text-white">Bienvenue sur l'administration</h1>
         <p class="text-xl text-gray-600 dark:text-gray-300 mb-8">Gérez facilement les accès des membres de Camélia Studio à l'espace de stockage partagé Kumora. Ajoutez, modifiez ou retirez les utilisateurs en quelques clics.</p>
-        <div class="mb-16">
+        <div class="mb-16 flex gap-4">
             <a href="{{ path('app_admin_user_index') }}" class="text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-800 dark:text-white dark:border-gray-600 font-medium rounded-lg px-8 py-3">
                 Gérer les utilisateurs
+            </a>
+
+            <a href="{{ path('app_admin_access_group_index') }}" class="text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-800 dark:text-white dark:border-gray-600 font-medium rounded-lg px-8 py-3">
+                Gérer les groupes d'accès
             </a>
         </div>
     </div>
