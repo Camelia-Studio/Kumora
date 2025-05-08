@@ -115,7 +115,7 @@ class AccessGroup
     }
 
     /**
-     * @return Collection
+     * @return Collection<int, ParentDirectory>
      */
     public function getParentDirectories(): Collection
     {
@@ -143,10 +143,7 @@ class AccessGroup
     }
 
     /**
-     * @return Collection
-     */
-    /**
-     * @return Collection
+     * @return Collection<int, ParentDirectoryPermission>
      */
     public function getParentDirectoryPermissions(): Collection
     {

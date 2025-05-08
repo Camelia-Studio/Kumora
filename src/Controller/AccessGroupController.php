@@ -80,7 +80,7 @@ final class AccessGroupController extends AbstractController
             $access = $accessGroupRepository->getSuperiorRole($accessGroup);
             foreach ($parentDirectories as $parentDirectory) {
                 $accessGroup->removeParentDirectory($parentDirectory);
-                $parentDirectory->setAccessGroup($access);
+                $parentDirectory->setOwnerRole($access);
 
                 $entityManager->persist($parentDirectory);
             }
@@ -88,12 +88,10 @@ final class AccessGroupController extends AbstractController
         $parentDirectoryPermissions = $accessGroup->getParentDirectoryPermissions();
 
         if (count($parentDirectoryPermissions) > 0) {
-            $access = $accessGroupRepository->getSuperiorRole($accessGroup);
             foreach ($parentDirectoryPermissions as $parentDirectoryPermission) {
                 $accessGroup->removeParentDirectoryPermission($parentDirectoryPermission);
-                $parentDirectoryPermission->setAccessGroup($access);
 
-                $entityManager->persist($parentDirectoryPermission);
+                $entityManager->remove($parentDirectoryPermission);
             }
         }
 
