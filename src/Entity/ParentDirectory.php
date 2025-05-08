@@ -20,7 +20,7 @@ class ParentDirectory
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
-    #[ORM\ManyToOne(inversedBy: 'users')]
+    #[ORM\ManyToOne(inversedBy: 'parentDirectories')]
     private ?AccessGroup $ownerRole = null;
 
     #[ORM\ManyToOne(inversedBy: 'parentDirectories')]
@@ -63,7 +63,7 @@ class ParentDirectory
         return $this->ownerRole;
     }
 
-    public function setOwnerRole(AccessGroup $ownerRole): static
+    public function setOwnerRole(?AccessGroup $ownerRole): static
     {
         $this->ownerRole = $ownerRole;
 

@@ -30,6 +30,34 @@ class AccessGroupRepository extends ServiceEntityRepository
         return $accessGroup;
     }
 
+    public function getSuperiorRole(AccessGroup $accessGroup): ?AccessGroup
+    {
+        $qb = $this->createQueryBuilder('a');
+        $accessGroup = $qb->andWhere('a.position < :position')->setParameter('position', $accessGroup->getPosition())->orderBy('a.position', 'DESC')->setMaxResults(1)->getQuery()->getOneOrNullResult();
+
+        return null === $accessGroup ? $this->createQueryBuilder('a')
+            ->andWhere('a.position != :position')
+            ->setParameter('position', $accessGroup->getPosition())
+            ->orderBy('a.position', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult() : $accessGroup;
+    }
+
+    public function getInferiorRole(AccessGroup $accessGroup): ?AccessGroup
+    {
+        $qb = $this->createQueryBuilder('a');
+        $accessGroup = $qb->andWhere('a.position > :position')->setParameter('position', $accessGroup->getPosition())->orderBy('a.position', 'DESC')->setMaxResults(1)->getQuery()->getOneOrNullResult();
+
+        return null === $accessGroup ? $this->createQueryBuilder('a')
+            ->andWhere('a.position != :position')
+            ->setParameter('position', $accessGroup->getPosition())
+            ->orderBy('a.position', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult() : $accessGroup;
+    }
+
     public function getLowestRole(): AccessGroup
     {
         $qb = $this->createQueryBuilder('a');

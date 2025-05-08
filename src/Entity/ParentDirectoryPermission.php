@@ -15,7 +15,7 @@ class ParentDirectoryPermission
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'users')]
+    #[ORM\ManyToOne(inversedBy: 'parentDirectoryPermissions')]
     private ?AccessGroup $role = null;
 
     #[ORM\Column]
@@ -38,7 +38,7 @@ class ParentDirectoryPermission
         return $this->role;
     }
 
-    public function setRole(AccessGroup $role): static
+    public function setRole(?AccessGroup $role): static
     {
         $this->role = $role;
 

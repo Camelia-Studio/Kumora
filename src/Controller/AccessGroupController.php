@@ -58,8 +58,48 @@ final class AccessGroupController extends AbstractController
         ]);
     }
     #[Route('/admin/access-group/{id}', name: 'app_access_group_delete', methods: ['GET'])]
-    public function delete(AccessGroup $accessGroup, EntityManagerInterface $entityManager): Response
+    public function delete(AccessGroup $accessGroup, EntityManagerInterface $entityManager, AccessGroupRepository $accessGroupRepository): Response
     {
+        // On vérifie si le groupe d'accès n'est pas utilisé par un utilisateur
+        // Si c'est le cas, on le retire des utilisateurs (On met celui avec la première position inférieure)
+        $users = $accessGroup->getUsers();
+
+        if (count($users) > 0) {
+            $access = $accessGroupRepository->getInferiorRole($accessGroup);
+
+            foreach ($users as $user) {
+                $accessGroup->removeUser($user);
+                $user->setAccessGroup($access);
+
+                $entityManager->persist($user);
+            }
+        }
+
+        $parentDirectories = $accessGroup->getParentDirectories();
+        if (count($parentDirectories) > 0) {
+            $access = $accessGroupRepository->getSuperiorRole($accessGroup);
+            foreach ($parentDirectories as $parentDirectory) {
+                $accessGroup->removeParentDirectory($parentDirectory);
+                $parentDirectory->setAccessGroup($access);
+
+                $entityManager->persist($parentDirectory);
+            }
+        }
+        $parentDirectoryPermissions = $accessGroup->getParentDirectoryPermissions();
+
+        if (count($parentDirectoryPermissions) > 0) {
+            $access = $accessGroupRepository->getSuperiorRole($accessGroup);
+            foreach ($parentDirectoryPermissions as $parentDirectoryPermission) {
+                $accessGroup->removeParentDirectoryPermission($parentDirectoryPermission);
+                $parentDirectoryPermission->setAccessGroup($access);
+
+                $entityManager->persist($parentDirectoryPermission);
+            }
+        }
+
+        $entityManager->flush();
+
+
         $entityManager->remove($accessGroup);
         $entityManager->flush();
 

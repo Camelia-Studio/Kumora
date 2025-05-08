@@ -29,12 +29,20 @@ class AccessGroup
     #[ORM\OneToMany(targetEntity: User::class, mappedBy: 'accessGroup')]
     private Collection $users;
 
+    #[ORM\OneToMany(targetEntity: ParentDirectory::class, mappedBy: 'ownerRole')]
+    private Collection $parentDirectories;
+
+    #[ORM\OneToMany(targetEntity: ParentDirectoryPermission::class, mappedBy: 'role')]
+    private Collection $parentDirectoryPermissions;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $image = null;
 
     public function __construct()
     {
         $this->users = new ArrayCollection();
+        $this->parentDirectories = new ArrayCollection();
+        $this->parentDirectoryPermissions = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -102,6 +110,64 @@ class AccessGroup
     public function setImage(?string $image): static
     {
         $this->image = $image;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getParentDirectories(): Collection
+    {
+        return $this->parentDirectories;
+    }
+
+    public function addParentDirectory(ParentDirectory $parentDirectory): static
+    {
+        if (!$this->parentDirectories->contains($parentDirectory)) {
+            $this->parentDirectories->add($parentDirectory);
+            $parentDirectory->setOwnerRole($this);
+        }
+
+        return $this;
+    }
+
+    public function removeParentDirectory(ParentDirectory $parentDirectory): static
+    {
+        // set the owning side to null (unless already changed)
+        if ($this->parentDirectories->removeElement($parentDirectory) && $parentDirectory->getOwnerRole() === $this) {
+            $parentDirectory->setOwnerRole(null);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection
+     */
+    /**
+     * @return Collection
+     */
+    public function getParentDirectoryPermissions(): Collection
+    {
+        return $this->parentDirectoryPermissions;
+    }
+
+    public function addParentDirectoryPermission(ParentDirectoryPermission $parentDirectoryPermission): static
+    {
+        if (!$this->parentDirectoryPermissions->contains($parentDirectoryPermission)) {
+            $this->parentDirectoryPermissions->add($parentDirectoryPermission);
+            $parentDirectoryPermission->setRole($this);
+        }
+
+        return $this;
+    }
+
+    public function removeParentDirectoryPermission(ParentDirectoryPermission $parentDirectoryPermission): static
+    {
+        if ($this->parentDirectoryPermissions->removeElement($parentDirectoryPermission) && $parentDirectoryPermission->getRole() === $this) {
+            $parentDirectoryPermission->setRole(null);
+        }
 
         return $this;
     }
