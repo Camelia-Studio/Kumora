@@ -97,9 +97,6 @@ final class AccessGroupController extends AbstractController
             }
         }
 
-        $entityManager->flush();
-
-
         $entityManager->remove($accessGroup);
         $entityManager->flush();
 
