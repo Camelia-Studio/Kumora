@@ -37,7 +37,7 @@ class AccessGroupRepository extends ServiceEntityRepository
 
         return null === $access ? $this->createQueryBuilder('a')
             ->andWhere('a.position != :position')
-            ->setParameter('position', $access->getPosition())
+            ->setParameter('position', $accessGroup->getPosition())
             ->orderBy('a.position', 'DESC')
             ->setMaxResults(1)
             ->getQuery()
