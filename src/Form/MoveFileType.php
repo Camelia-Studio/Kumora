@@ -16,7 +16,7 @@ use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class MoveType extends AbstractType
+class MoveFileType extends AbstractType
 {
     /**
      * @throws FilesystemException
@@ -30,7 +30,7 @@ class MoveType extends AbstractType
                     'placeholder' => 'Saisissez le nouveau chemin',
                 ],
                 'autocomplete' => true,
-                'autocomplete_url' => '/kumora/autocomplete/path/directory',
+                'autocomplete_url' => '/kumora/autocomplete/path/file',
                 'tom_select_options' => [
                     'create' => true,
                     'createOnBlur' => true,

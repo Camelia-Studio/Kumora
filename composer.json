@@ -43,6 +43,7 @@
         "symfony/translation": "7.2.*",
         "symfony/twig-bundle": "7.2.*",
         "symfony/uid": "7.2.*",
+        "symfony/ux-autocomplete": "^2.24",
         "symfony/ux-dropzone": "^2.24.0",
         "symfony/ux-icons": "^2.24",
         "symfony/ux-live-component": "^2.24",

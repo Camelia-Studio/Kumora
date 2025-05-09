@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 
-@import "flowbite/src/themes/default";
 @plugin "flowbite/plugin";
 
 @source '../../vendor/tales-from-a-dev/flowbite-bundle/templates/**/*.html.twig';
@@ -25,4 +24,104 @@
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
+}
+.ts-control {
+    @apply !p-2.5;
+}
+
+.ts-wrapper:focus {
+    @apply rounded;
+}
+
+.ts-dropdown-content:focus {
+    @apply shadow-xl;
+}
+
+.ts-wrapper.plugin-remove_button .item {
+    @apply rounded-md;
+}
+.ts-wrapper.multi .ts-control > div {
+    @apply p-0 m-0 pl-1;
+}
+
+.ts-wrapper.plugin-remove_button .item .remove {
+    @apply border-none text-lg leading-none py-1 rounded-r-lg;
+}
+
+.ts-dropdown {
+    @apply rounded-md border border-solid border-t border-gray-600 shadow-xl;
+}
+
+.ts-dropdown [data-selectable].option:first-child {
+    @apply rounded-t-md;
+}
+
+.ts-dropdown [data-selectable].option:last-child {
+    @apply rounded-b-md;
+}
+.ts-dropdown .create:hover,
+.ts-dropdown .option:hover,
+.ts-dropdown .active {
+    @apply bg-gray-900 text-white;
+}
+
+.ts-dropdown .create:hover, .ts-dropdown .option:hover, .ts-dropdown .active {
+    background: var(--color-gray-900) !important;
+    color: white !important;
+}
+
+.ts-dropdown .active.create {
+    background: transparent !important;
+    color: white !important;
+}
+
+.ts-dropdown .active.create:hover {
+    background: var(--color-gray-600) !important;
+}
+
+
+
+.ts-wrapper .option .title {
+    display: block;
+}
+.ts-wrapper .option .url {
+    font-size: 12px;
+    display: block;
+    color: #a0a0a0;
+}
+
+.ts-dropdown-content {
+    @apply bg-gray-700 text-white border-gray-600;
+    border-radius: inherit;
+}
+
+.customDropDown {
+    @apply border text-sm rounded-lg bg-gray-700 border-gray-600 placeholder-gray-400 text-white cursor-default;
+}
+
+.ts-wrapper.single .ts-control, .ts-dropdown.single {
+    border-radius: 8px !important;
+    @apply bg-gray-700 border-gray-600 border-0;
+}
+
+.item {
+    @apply text-white bg-gray-900 border-gray-600 p-1 rounded-md;
+}
+
+.ts-wrapper.single .ts-control {
+    box-shadow: none !important;
+    background-image: none !important;
+}
+
+.ts-wrapper {
+    @apply p-0;
+}
+
+.ts-control, .ts-wrapper.single.input-active .ts-control {
+    background: transparent !important;
+    color: #fff !important;
+}
+
+.ts-dropdown, .ts-control, .ts-control input {
+    color: #fff !important;
 }

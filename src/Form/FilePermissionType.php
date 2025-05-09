@@ -43,6 +43,7 @@ class FilePermissionType extends AbstractType
                 'allow_add' => true,
                 'allow_delete' => true,
                 'by_reference' => false,
+                'label' => 'Permissions des groupes d\'accès inférieurs',
             ])
             ->add('submit', SubmitType::class, [
                 'label' => 'Enregistrer',

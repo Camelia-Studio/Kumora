@@ -8,6 +8,7 @@ use App\Entity\ParentDirectory;
 use App\Entity\User;
 use App\Form\CreateDirectoryType;
 use App\Form\FilePermissionType;
+use App\Form\MoveFileType;
 use App\Form\MoveType;
 use App\Form\RenameType;
 use App\Form\UploadType;
@@ -477,11 +478,15 @@ class FilesController extends AbstractController
             throw $this->createNotFoundException("Vous n'avez pas le droit de déplacer ce fichier !");
         }
         $fileInfo = [];
+        $formType = null;
 
         if ($this->filesystem->fileExists($path)) {
             $fileInfo['type'] = 'file';
+            $formType = MoveFileType::class;
+
         } elseif ($this->filesystem->directoryExists($path)) {
             $fileInfo['type'] = 'directory';
+            $formType = MoveType::class;
         } else {
             throw $this->createNotFoundException("Ce fichier ou dossier n'existe pas !");
         }
@@ -490,7 +495,7 @@ class FilesController extends AbstractController
             'path' => '/' . $this->normalizePath(dirname($path)),
         ];
 
-        $form = $this->createForm(MoveType::class, $newPath);
+        $form = $this->createForm($formType, $newPath);
 
         $form->handleRequest($request);
 
