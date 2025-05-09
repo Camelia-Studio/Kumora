@@ -146,7 +146,10 @@
                                 <a title="Permet de déplacer le fichier" href="{{ path('app_files_move', {
                                     path: file.path
                                 }) }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="mdi:file-move" /></a>
-                                <a title="Permet de supprimer le fichier" href="{{
+                                <a title="Permet de supprimer le fichier" onclick="event.preventDefault(); if (confirm('Veux-tu vraiment supprimer ce fichier ?')) {
+                                    // On redirige vers la page de suppression
+                                    window.location.href = this.href
+                                }" href="{{
                                 path('app_files_delete', {
                                     filename: file.path
                                 })
@@ -173,7 +176,10 @@
                                 }) }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="mdi:folder-move" /></a>
                                 <a href="{{ path('app_files_delete_directory', {
                                     path: file.path
-                                }) }}" class="hover:text-red-700 duration-300" title="Permet de supprimer le dossier"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
+                                }) }}" class="hover:text-red-700 duration-300" title="Permet de supprimer le dossier" onclick="event.preventDefault(); if (confirm('Veux-tu vraiment supprimer ce dossier ?')) {
+                                    // On redirige vers la page de suppression
+                                    window.location.href = this.href
+                                }"><twig:ux:icon class="w-6 h-6" name="fa6-solid:trash-can" /></a>
                             {% endif %}
                         {% endif %}
                     </td>
