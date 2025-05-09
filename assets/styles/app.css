@@ -61,11 +61,11 @@
 }
 .ts-dropdown .create:hover,
 .ts-dropdown .option:hover,
-.ts-dropdown .active {
+.ts-dropdown .active{
     @apply bg-gray-900 text-white;
 }
 
-.ts-dropdown .create:hover, .ts-dropdown .option:hover, .ts-dropdown .active {
+.ts-dropdown .create:hover, .ts-dropdown .option:hover, .ts-dropdown .active, .ts-dropdown .active.create:hover {
     background: var(--color-gray-900) !important;
     color: white !important;
 }
@@ -75,8 +75,9 @@
     color: white !important;
 }
 
-.ts-dropdown .active.create:hover {
+.create {
     background: var(--color-gray-600) !important;
+    color: white !important;
 }
 
 
