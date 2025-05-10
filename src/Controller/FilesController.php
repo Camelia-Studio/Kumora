@@ -173,7 +173,6 @@ class FilesController extends AbstractController
     public function rename(#[MapQueryParameter('path')] string $filepath, Request $request, Filesystem $defaultAdapter): Response
     {
         $filepath = $this->normalizePath($filepath);
-        $this->getUser();
 
         if ('' === $filepath || str_starts_with($filepath, '.') || !$defaultAdapter->fileExists($filepath)) {
             throw $this->createNotFoundException("Ce fichier n'existe pas !");
@@ -216,6 +215,7 @@ class FilesController extends AbstractController
             'form' => $form->createView(),
             'filepath' => $filepath,
             'type' => 'fichier',
+            'path' => dirname($filepath),
         ]);
     }
     /**
@@ -341,6 +341,7 @@ class FilesController extends AbstractController
             'form' => $form->createView(),
             'filepath' => $filepath,
             'type' => 'dossier',
+            'path' => $this->normalizePath(dirname($filepath)),
         ]);
     }
     /**
@@ -478,7 +479,6 @@ class FilesController extends AbstractController
             throw $this->createNotFoundException("Vous n'avez pas le droit de déplacer ce fichier !");
         }
         $fileInfo = [];
-        $formType = null;
 
         if ($this->filesystem->fileExists($path)) {
             $fileInfo['type'] = 'file';
@@ -605,10 +605,15 @@ class FilesController extends AbstractController
             ]);
         }
 
+
+        $folderPath = $this->normalizePath(dirname($path));
+
+
         return $this->render('files/move.html.twig', [
             'form' => $form->createView(),
             'path' => $path,
             'fileinfo' => $fileInfo,
+            'folderPath' => $folderPath,
         ]);
     }
 }

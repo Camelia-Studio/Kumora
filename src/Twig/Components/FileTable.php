@@ -37,6 +37,7 @@ final class FileTable
     public function getFiles(): array
     {
         $this->path = $this->normalizePath($this->path);
+
         if ('' !== $this->path) {
             $pathExploded = explode('/', $this->path);
 
@@ -110,6 +111,11 @@ final class FileTable
         $path = str_replace('..', '', $path);
         // On retire les . qui sont seul dans la chaîne, en vérifiant qu'il n'y a pas de lettre avant ou après
         $path = preg_replace('/(?<!\w)\.(?!\w)/', '', $path);
+
+        // On retire le point au début de la chaîne
+        if (str_starts_with($path, '.')) {
+            $path = substr($path, 1);
+        }
 
         return str_replace('//', '/', $path);
     }
