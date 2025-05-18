@@ -86,7 +86,7 @@ class FilesController extends AbstractController
         if (!$preview) {
             $disposition = HeaderUtils::makeDisposition(
                 HeaderUtils::DISPOSITION_ATTACHMENT,
-                basename($file)
+                preg_replace('/[\x00-\x1F\x80-\xFF]/', '', basename($file)),
             );
             $response->headers->set('Content-Disposition', $disposition);
         }
