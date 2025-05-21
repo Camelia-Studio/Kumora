@@ -38,6 +38,7 @@ class FilesController extends AbstractController
         private readonly ParentDirectoryRepository $parentDirectoryRepository,
         private readonly AccessGroupRepository     $accessGroupRepository,
         private readonly Filesystem $filesystem,
+        private readonly string $projectDir,
     ) {
     }
     /**
@@ -383,7 +384,7 @@ class FilesController extends AbstractController
              */
             foreach ($files as $file) {
                 $filename = $file->getClientOriginalName();
-                $defaultAdapter->write($path . '/' . $filename, $file->getContent());
+                $file->move($this->projectDir . '/uploads/' . $path , $filename);
             }
 
             $this->addFlash('success', 'Les ' . count($files) . ' fichiers ont bien été envoyés.');
