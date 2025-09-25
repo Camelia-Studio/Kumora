@@ -384,7 +384,7 @@ class FilesController extends AbstractController
              */
             foreach ($files as $file) {
                 $filename = $file->getClientOriginalName();
-                $file->move($this->projectDir . '/uploads/' . $path , $filename);
+                $file->move($this->projectDir . '/uploads/' . $path, $filename);
             }
 
             $this->addFlash('success', 'Les ' . count($files) . ' fichiers ont bien été envoyés.');
@@ -484,7 +484,6 @@ class FilesController extends AbstractController
         if ($this->filesystem->fileExists($path)) {
             $fileInfo['type'] = 'file';
             $formType = MoveFileType::class;
-
         } elseif ($this->filesystem->directoryExists($path)) {
             $fileInfo['type'] = 'directory';
             $formType = MoveType::class;
@@ -606,9 +605,7 @@ class FilesController extends AbstractController
             ]);
         }
 
-
         $folderPath = $this->normalizePath(dirname($path));
-
 
         return $this->render('files/move.html.twig', [
             'form' => $form->createView(),
