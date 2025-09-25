@@ -1,0 +1,168 @@
+{# Modal pour la prévisualisation des fichiers #}
+<div id="filePreviewModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    {# Overlay #}
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-black/10 transition-opacity" aria-hidden="true" onclick="closePreviewModal()"></div>
+
+        {# Modal content #}
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-7xl sm:w-full lg:max-w-[90vw] xl:max-w-[85vw] dark:bg-gray-800">
+            {# Header #}
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 dark:bg-gray-800">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                        <span id="previewFileName">Aperçu du fichier</span>
+                    </h3>
+                    <button type="button" onclick="closePreviewModal()" class="bg-white rounded-md p-2 inline-flex items-center justify-center text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
+                        <span class="sr-only">Fermer</span>
+                        <twig:ux:icon name="fa6-solid:xmark" class="w-6 h-6" />
+                    </button>
+                </div>
+            </div>
+
+            {# Content #}
+            <div class="px-4 py-5 sm:p-6">
+                <div id="previewContent" class="w-full h-96 sm:h-[60vh] lg:h-[70vh] flex items-center justify-center bg-gray-50 rounded-lg dark:bg-gray-700">
+                    <div class="text-center">
+                        <twig:ux:icon name="fa6-solid:spinner" class="w-8 h-8 animate-spin text-gray-400 mx-auto mb-2" />
+                        <p class="text-gray-500 dark:text-gray-400">Chargement...</p>
+                    </div>
+                </div>
+            </div>
+
+            {# Footer #}
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse dark:bg-gray-700">
+                <a id="downloadLink" href="#" target="_blank" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <twig:ux:icon name="fa6-solid:download" class="w-4 h-4 mr-2" />
+                    Télécharger
+                </a>
+                <button type="button" onclick="closePreviewModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-600 dark:text-white dark:border-gray-500 dark:hover:bg-gray-700">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openPreviewModal(fileName, previewUrl, downloadUrl) {
+    const modal = document.getElementById('filePreviewModal');
+    const content = document.getElementById('previewContent');
+    const fileNameEl = document.getElementById('previewFileName');
+    const downloadLink = document.getElementById('downloadLink');
+    
+    // Mise à jour du titre et lien de téléchargement
+    fileNameEl.textContent = fileName;
+    downloadLink.href = downloadUrl;
+    
+    // Affichage du modal
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Réinitialisation du contenu
+    content.innerHTML = `
+        <div class="text-center">
+            <svg class="w-8 h-8 animate-spin text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-500 dark:text-gray-400">Chargement...</p>
+        </div>
+    `;
+    
+    // Détection du type de fichier
+    const extension = fileName.split('.').pop().toLowerCase();
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension);
+    const isPdf = extension === 'pdf';
+    const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(extension);
+    const isAudio = ['mp3', 'wav', 'ogg', 'aac', 'flac'].includes(extension);
+    const isText = ['txt', 'md', 'json', 'xml', 'csv', 'log'].includes(extension);
+    const isCode = ['js', 'css', 'html', 'php', 'py', 'java', 'cpp', 'c', 'yml', 'yaml'].includes(extension);
+    
+    // Génération du contenu selon le type
+    if (isImage) {
+        const img = document.createElement('img');
+        img.src = previewUrl;
+        img.alt = fileName;
+        img.className = 'max-w-full max-h-full object-contain mx-auto rounded-lg shadow-lg';
+        img.onerror = function() {
+            content.innerHTML = '<div class="text-center"><p class="text-red-500 dark:text-red-400">Impossible de charger l\'image</p></div>';
+        };
+        content.innerHTML = '';
+        content.appendChild(img);
+    } else if (isPdf) {
+        const iframe = document.createElement('iframe');
+        iframe.src = previewUrl;
+        iframe.className = 'w-full h-full rounded-lg';
+        iframe.title = fileName;
+        iframe.onerror = function() {
+            content.innerHTML = '<div class="text-center"><p class="text-red-500 dark:text-red-400">Impossible de charger le PDF</p></div>';
+        };
+        content.innerHTML = '';
+        content.appendChild(iframe);
+    } else if (isVideo) {
+        content.innerHTML = `
+            <video controls class="max-w-full max-h-full mx-auto rounded-lg shadow-lg">
+                <source src="${previewUrl}" type="video/${extension === 'mov' ? 'quicktime' : extension}">
+                <p class="text-red-500 dark:text-red-400">Votre navigateur ne supporte pas la lecture vidéo.</p>
+            </video>
+        `;
+    } else if (isAudio) {
+        content.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full">
+                <div class="mb-4">
+                    <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                    </svg>
+                </div>
+                <audio controls class="w-full max-w-md">
+                    <source src="${previewUrl}" type="audio/${extension}">
+                    <p class="text-red-500 dark:text-red-400">Votre navigateur ne supporte pas la lecture audio.</p>
+                </audio>
+            </div>
+        `;
+    } else if (isText || isCode) {
+        // Pour les fichiers texte, on fait un appel pour récupérer le contenu
+        fetch(previewUrl)
+            .then(response => response.text())
+            .then(text => {
+                content.innerHTML = `
+                    <pre class="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg overflow-auto h-full text-sm"><code>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+                `;
+            })
+            .catch(() => {
+                content.innerHTML = `
+                    <div class="text-center">
+                        <p class="text-red-500 dark:text-red-400">Impossible de charger le contenu du fichier</p>
+                    </div>
+                `;
+            });
+    } else {
+        // Type de fichier non supporté pour la prévisualisation
+        content.innerHTML = `
+            <div class="text-center">
+                <div class="mb-4">
+                    <svg class="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                    </svg>
+                </div>
+                <p class="text-gray-500 dark:text-gray-400 mb-2">Aperçu non disponible pour ce type de fichier</p>
+                <p class="text-sm text-gray-400 dark:text-gray-500">Type : ${extension.toUpperCase()}</p>
+                <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">Utilisez le bouton "Télécharger" pour ouvrir le fichier</p>
+            </div>
+        `;
+    }
+}
+
+function closePreviewModal() {
+    const modal = document.getElementById('filePreviewModal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// Fermer avec Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePreviewModal();
+    }
+});
+</script>
