@@ -18,6 +18,20 @@
         </div>
     {% endif %}
     <div class="mt-4">
+        {% if path != '' %}
+            <div class="mb-4">
+                {% set parentPath = path|split('/')|slice(0, -1)|join('/') %}
+                <button
+                    type="button"
+                    data-model="path"
+                    data-value="{{ parentPath }}"
+                    data-action="live#update"
+                    class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:ring-gray-300 rounded-lg dark:bg-gray-500 dark:hover:bg-gray-600 focus:outline-none dark:focus:ring-gray-700 transition-colors w-full lg:w-auto">
+                    <twig:ux:icon name="fa6-solid:arrow-left" class="w-4 h-4 mr-2" />
+                    Retour
+                </button>
+            </div>
+        {% endif %}
         {% include 'partials/breadbrumb.html.twig' %}
     </div>
 
