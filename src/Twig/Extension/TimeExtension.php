@@ -18,6 +18,7 @@ class TimeExtension extends AbstractExtension
             // parameter: ['is_safe' => ['html']]
             // Reference: https://twig.symfony.com/doc/3.x/advanced.html#automatic-escaping
             new TwigFilter('time_diff', [TimeExtensionRuntime::class, 'timeDiff']),
+            new TwigFilter('last_login_format', [TimeExtensionRuntime::class, 'lastLoginFormat']),
         ];
     }
 }

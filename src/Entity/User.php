@@ -52,6 +52,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToOne(inversedBy: 'users')]
     private ?AccessGroup $accessGroup = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastLoginAt = null;
+
     public function __construct()
     {
         $this->parentDirectories = new ArrayCollection();
@@ -180,6 +183,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setAccessGroup(?AccessGroup $accessGroup): static
     {
         $this->accessGroup = $accessGroup;
+
+        return $this;
+    }
+
+    public function getLastLoginAt(): ?\DateTimeImmutable
+    {
+        return $this->lastLoginAt;
+    }
+
+    public function setLastLoginAt(?\DateTimeImmutable $lastLoginAt): static
+    {
+        $this->lastLoginAt = $lastLoginAt;
 
         return $this;
     }

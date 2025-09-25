@@ -25,6 +25,7 @@
                     <th scope="col" class="px-6 py-3">Email</th>
                     <th scope="col" class="px-6 py-3">Rôle</th>
                     <th scope="col" class="px-6 py-3">Groupe d'accès</th>
+                    <th scope="col" class="px-6 py-3">Dernière connexion</th>
                     <th scope="col" class="px-6 py-3">Actions</th>
                 </tr>
                 </thead>
@@ -37,6 +38,11 @@
                         <td class="px-6 py-4">{{ user.email }}</td>
                         <td class="px-6 py-4">{{ user.roles[0] == 'ROLE_ADMIN' ? 'Administrateur' : 'Utilisateur' }}</td>
                         <td class="px-6 py-4">{{ user.accessGroup.name ?? 'Aucun groupe d\'accès' }}</td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm {{ user.lastLoginAt ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500 italic' }}">
+                                {{ user.lastLoginAt|last_login_format }}
+                            </span>
+                        </td>
                         <td class="px-6 py-4 flex gap-2 light:text-black">
                             <a href="{{ path('app_admin_user_edit', { user: user.id }) }}" class="hover:text-blue-700 duration-300" title="Modifier l'utilisateur">
                                 <twig:ux:icon class="w-6 h-6" name="fa6-solid:pencil" />
@@ -78,6 +84,12 @@
                             <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Groupe:</span>
                             <span class="text-sm text-gray-900 dark:text-white">
                                 {{ user.accessGroup.name ?? 'Aucun groupe d\'accès' }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Dernière connexion:</span>
+                            <span class="text-sm {{ user.lastLoginAt ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500 italic' }}">
+                                {{ user.lastLoginAt|last_login_format }}
                             </span>
                         </div>
                     </div>
