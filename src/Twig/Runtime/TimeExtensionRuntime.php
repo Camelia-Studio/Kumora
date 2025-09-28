@@ -47,7 +47,7 @@ class TimeExtensionRuntime implements RuntimeExtensionInterface
 
     public function lastLoginFormat(?\DateTimeImmutable $lastLogin): string
     {
-        if (null === $lastLogin) {
+        if (!$lastLogin instanceof \DateTimeImmutable) {
             return 'Jamais connecté';
         }
 

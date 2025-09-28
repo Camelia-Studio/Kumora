@@ -36,7 +36,7 @@ class AutocompleteController extends AbstractController
 
         foreach ($files as $file) {
             if ('dir' === $file['type']) {
-                $parts = explode('/', $file['path']);
+                $parts = explode('/', (string) $file['path']);
 
                 $parentDirectory = $parentDirectoryRepository->findOneBy(['name' => $parts[0]]);
 
@@ -47,7 +47,7 @@ class AutocompleteController extends AbstractController
         }
 
         // Filtrer les chemins en fonction de la requête
-        $paths = array_filter($paths, static fn ($path) => str_contains($path, $q));
+        $paths = array_filter($paths, static fn ($path) => str_contains((string) $path, $q));
 
         // Retour au format Tom Select
         $data = array_map(static function ($path) {

@@ -113,8 +113,8 @@ final class FileTable
         $path = preg_replace('/(?<!\w)\.(?!\w)/', '', $path);
 
         // On retire le point au début de la chaîne
-        if (str_starts_with($path, '.')) {
-            $path = substr($path, 1);
+        if (str_starts_with((string) $path, '.')) {
+            $path = substr((string) $path, 1);
         }
 
         return str_replace('//', '/', $path);

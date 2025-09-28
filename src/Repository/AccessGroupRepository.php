@@ -35,13 +35,13 @@ class AccessGroupRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('a');
         $access = $qb->andWhere('a.position < :position')->setParameter('position', $accessGroup->getPosition())->orderBy('a.position', 'DESC')->setMaxResults(1)->getQuery()->getOneOrNullResult();
 
-        return null === $access ? $this->createQueryBuilder('a')
+        return $access ?? $this->createQueryBuilder('a')
             ->andWhere('a.position != :position')
             ->setParameter('position', $accessGroup->getPosition())
             ->orderBy('a.position', 'DESC')
             ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult() : $access;
+            ->getOneOrNullResult();
     }
 
     public function getInferiorRole(AccessGroup $accessGroup): ?AccessGroup
@@ -49,13 +49,13 @@ class AccessGroupRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('a');
         $access = $qb->andWhere('a.position > :position')->setParameter('position', $accessGroup->getPosition())->orderBy('a.position', 'DESC')->setMaxResults(1)->getQuery()->getOneOrNullResult();
 
-        return null === $access ? $this->createQueryBuilder('a')
+        return $access ?? $this->createQueryBuilder('a')
             ->andWhere('a.position != :position')
             ->setParameter('position', $accessGroup->getPosition())
             ->orderBy('a.position', 'ASC')
             ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult() : $access;
+            ->getOneOrNullResult();
     }
 
     public function getLowestRole(): AccessGroup

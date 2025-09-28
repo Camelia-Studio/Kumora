@@ -1,0 +1,22 @@
+name: CI
+
+on: [push]
+
+env:
+  APP_ENV: dev
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: php-actions/composer@v6
+    - name: Cache Symfony dev container
+      run: |
+        php bin/console cache:warmup --env=dev
+    - uses: php-actions/phpstan@v3
+      with:
+        php-version: '8.2'
+        memory_limit: 512M
+
