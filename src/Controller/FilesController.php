@@ -269,7 +269,7 @@ class FilesController extends AbstractController
                 $parentDirectory = new ParentDirectory();
                 $parentDirectory->setName($name);
                 $parentDirectory->setOwnerRole($user->getAccessGroup());
-                $parentDirectory->setIsPublic(true);
+                $parentDirectory->setIsPublic(false);
                 $parentDirectory->setUserCreated($user);
 
                 $this->entityManager->persist($parentDirectory);
