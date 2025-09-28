@@ -6,8 +6,8 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\UserAdminType;
-use App\Repository\UserRepository;
 use App\Repository\UserActionRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -101,13 +101,13 @@ class AdminController extends AbstractController
         // Création du graphique en barres pour les utilisateurs les plus actifs
         $activeUsersChart = $this->chartBuilder->createChart(Chart::TYPE_BAR);
         $activeUsersChart->setData([
-            'labels' => array_map(fn($user) => $user['fullname'], $mostActiveUsers),
+            'labels' => array_map(static fn ($user) => $user['fullname'], $mostActiveUsers),
             'datasets' => [
                 [
                     'label' => 'Nombre d\'actions',
                     'backgroundColor' => 'rgba(34, 197, 94, 0.8)',
                     'borderColor' => 'rgb(34, 197, 94)',
-                    'data' => array_map(fn($user) => $user['actionCount'], $mostActiveUsers),
+                    'data' => array_map(static fn ($user) => $user['actionCount'], $mostActiveUsers),
                 ],
             ],
         ]);

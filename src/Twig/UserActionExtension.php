@@ -13,9 +13,9 @@ class UserActionExtension extends AbstractExtension
     public function getFilters(): array
     {
         return [
-            new TwigFilter('action_icon', [$this, 'getActionIcon']),
-            new TwigFilter('action_color', [$this, 'getActionColor']),
-            new TwigFilter('time_diff', [$this, 'getTimeDiff']),
+            new TwigFilter('action_icon', $this->getActionIcon(...)),
+            new TwigFilter('action_color', $this->getActionColor(...)),
+            new TwigFilter('time_diff', $this->getTimeDiff(...)),
         ];
     }
 
@@ -56,23 +56,23 @@ class UserActionExtension extends AbstractExtension
         $diff = $now->diff($date);
 
         if ($diff->y > 0) {
-            return $diff->y === 1 ? 'il y a 1 an' : "il y a {$diff->y} ans";
+            return 1 === $diff->y ? 'il y a 1 an' : "il y a {$diff->y} ans";
         }
 
         if ($diff->m > 0) {
-            return $diff->m === 1 ? 'il y a 1 mois' : "il y a {$diff->m} mois";
+            return 1 === $diff->m ? 'il y a 1 mois' : "il y a {$diff->m} mois";
         }
 
         if ($diff->d > 0) {
-            return $diff->d === 1 ? 'il y a 1 jour' : "il y a {$diff->d} jours";
+            return 1 === $diff->d ? 'il y a 1 jour' : "il y a {$diff->d} jours";
         }
 
         if ($diff->h > 0) {
-            return $diff->h === 1 ? 'il y a 1 heure' : "il y a {$diff->h} heures";
+            return 1 === $diff->h ? 'il y a 1 heure' : "il y a {$diff->h} heures";
         }
 
         if ($diff->i > 0) {
-            return $diff->i === 1 ? 'il y a 1 minute' : "il y a {$diff->i} minutes";
+            return 1 === $diff->i ? 'il y a 1 minute' : "il y a {$diff->i} minutes";
         }
 
         return 'il y a quelques secondes';
