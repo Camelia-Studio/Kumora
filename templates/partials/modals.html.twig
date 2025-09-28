@@ -1,0 +1,85 @@
+<!-- Modale de confirmation -->
+<div id="confirmationModal"
+     data-controller="flowbite-modal"
+     data-flowbite-modal-type-value="confirmation"
+     data-modal-backdrop="static"
+     tabindex="-1"
+     aria-hidden="true"
+     class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full backdrop-blur-sm">
+    <div class="relative p-4 w-full max-w-md max-h-full animate-in fade-in duration-200">
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-xl shadow-2xl dark:bg-gray-800 border border-gray-100 dark:border-gray-700 transform scale-95 animate-in zoom-in duration-300">
+            <!-- Modal header avec icône distinctive -->
+            <div class="flex flex-col items-center text-center p-6 border-b border-gray-100 dark:border-gray-700">
+                <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-red-100 to-red-50 dark:from-red-900/20 dark:to-red-800/10 mb-4 shadow-lg">
+                    <svg class="h-8 w-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </div>
+                <h3 data-flowbite-modal-target="title" class="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    Confirmer l'action
+                </h3>
+            </div>
+            <!-- Modal body -->
+            <div class="p-6">
+                <p data-flowbite-modal-target="message" class="text-base leading-relaxed text-gray-600 dark:text-gray-300 text-center">
+                    Êtes-vous sûr de vouloir effectuer cette action ?
+                </p>
+            </div>
+            <!-- Modal footer -->
+            <div class="flex items-center justify-center gap-3 p-6 border-t border-gray-100 dark:border-gray-700">
+                <button data-action="click->flowbite-modal#cancel" type="button" class="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:ring-4 focus:ring-gray-200 transition-all duration-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:border-gray-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Annuler
+                </button>
+                <button data-action="click->flowbite-modal#confirm" type="button" class="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:ring-4 focus:ring-red-300 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 dark:focus:ring-red-800">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modale de notification -->
+<div id="notificationModal"
+     data-controller="flowbite-modal"
+     data-flowbite-modal-type-value="notification"
+     data-modal-backdrop="static"
+     tabindex="-1"
+     aria-hidden="true"
+     class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full backdrop-blur-sm">
+    <div class="relative p-4 w-full max-w-md max-h-full animate-in fade-in duration-200">
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-xl shadow-2xl dark:bg-gray-800 border border-gray-100 dark:border-gray-700 transform scale-95 animate-in zoom-in duration-300">
+            <!-- Modal header avec icône distinctive -->
+            <div class="flex flex-col items-center text-center p-6 border-b border-gray-100 dark:border-gray-700">
+                <div data-flowbite-modal-target="icon" class="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/20 dark:to-green-800/10 mb-4 shadow-lg">
+                    <svg class="h-8 w-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 data-flowbite-modal-target="title" class="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    Notification
+                </h3>
+            </div>
+            <!-- Modal body -->
+            <div class="p-6">
+                <p data-flowbite-modal-target="message" class="text-base leading-relaxed text-gray-600 dark:text-gray-300 text-center"></p>
+            </div>
+            <!-- Modal footer -->
+            <div class="flex items-center justify-center p-6 border-t border-gray-100 dark:border-gray-700">
+                <button data-action="click->flowbite-modal#close" type="button" class="inline-flex items-center gap-2 px-8 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 dark:focus:ring-blue-800">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Parfait !
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
