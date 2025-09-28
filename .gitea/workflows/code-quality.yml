@@ -27,11 +27,10 @@ jobs:
         run: php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && php composer-setup.php && php -r "unlink('composer-setup.php');"
       - name: Install Dependencies
         run: php composer.phar install
-      - name: Cache Symfony dev container
+      - name: Run Rector
         run: |
           php bin/console cache:warmup --env=dev
-      - name: Run Rector
-        run: vendor/bin/rector process --dry-run
+          vendor/bin/rector process --dry-run
 
   phpstan:
     runs-on: ubuntu-latest
@@ -45,9 +44,8 @@ jobs:
         run: php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && php composer-setup.php && php -r "unlink('composer-setup.php');"
       - name: Install Dependencies
         run: php composer.phar install
-      - name: Cache Symfony dev container
+      - name: Run phpstan
         run: |
           php bin/console cache:warmup --env=dev
-      - name: Run Rector
-        run: vendor/bin/phpstan --memory-limit=512M
+          vendor/bin/phpstan --memory-limit=512M
 
