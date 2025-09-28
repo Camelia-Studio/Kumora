@@ -61,15 +61,19 @@
             </thead>
             <tbody>
             {% for file in this.files %}
-                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 group">
+                {% if this.parentDir == null %}
+                    {% set parentDirectory = get_parent_dir(file.path) %}
+                {% else %}
+                    {% set parentDirectory = this.parentDir %}
+                {% endif %}
+                <tr class="{{ parentDirectory.public ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900' }} border-b dark:border-gray-700 group">
                     {% if file.type == 'file' %}
                         <td class="px-6 py-4 font-medium light:text-gray-900 whitespace-nowrap cursor-pointer">
                             <button onclick="openPreviewModal('{{ file.path|basename }}', '{{ file.previewUrl }}', '{{ file.url }}')" class="flex gap-2 items-center w-full h-full duration-300 group-[:hover:not(:has(.links-total:hover))]:text-blue-900  dark:group-[:hover:not(:has(.links-total:hover))]:text-blue-700 text-left">
-                                {% if file.type == 'file' %}
-                                    <twig:ux:icon name="{{ getIcons(file.path|basename) }}" class="w-6 h-6" />
-                                {% else %}
-                                    <twig:ux:icon name="line-md:folder-filled" class="w-6 h-6" />
+                                {% if not parentDirectory.public %}
+                                    <twig:ux:icon name="fa6-solid:lock" class="w-4 h-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
                                 {% endif %}
+                                <twig:ux:icon name="{{ getIcons(file.path|basename) }}" class="w-6 h-6" />
                                 {{ file.path|basename }}
                             </button>
                         </td>
@@ -99,7 +103,9 @@
                                         {% endfor %}
                                     </div>
                                 {% else %}
-                                    <p>Dossier privé</p>
+                                    <div class="flex items-center gap-1">
+                                        <p class="text-gray-600 dark:text-gray-300">Dossier privé</p>
+                                    </div>
                                 {% endif %}
                             </a>
                         </td>
@@ -111,6 +117,9 @@
                                     data-value="{{ file.path }}"
                                     data-action="live#update"
                                     class="flex gap-2 items-center w-full h-full duration-300 group-[:hover:not(:has(.links-total:hover))]:text-blue-900  dark:group-[:hover:not(:has(.links-total:hover))]:text-blue-700 cursor-pointer">
+                                {% if not parentDirectory.public %}
+                                    <twig:ux:icon name="fa6-solid:lock" class="w-4 h-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+                                {% endif %}
                                 <twig:ux:icon name="line-md:folder-filled" class="w-6 h-6" />
                                 {{ file.path|basename }}
                             </button>
@@ -150,7 +159,9 @@
                                         {% endfor %}
                                     </div>
                                 {% else %}
-                                    <p>Dossier privé</p>
+                                    <div class="flex items-center gap-1">
+                                        <p class="text-gray-600 dark:text-gray-300">Dossier privé</p>
+                                    </div>
                                 {% endif %}
                             </button>
                         </td>
@@ -219,16 +230,22 @@
                 {% set parentDirectory = this.parentDir %}
             {% endif %}
             
-            <div class="bg-white border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
+            <div class="{{ parentDirectory.public ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-600' }} border rounded-lg p-4">
                 {# File Header #}
                 <div class="flex items-center gap-3 mb-3">
                     {% if file.type == 'file' %}
+                        {% if not parentDirectory.public %}
+                            <twig:ux:icon name="fa6-solid:lock" class="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mr-1" />
+                        {% endif %}
                         <twig:ux:icon name="{{ getIcons(file.path|basename) }}" class="w-8 h-8 flex-shrink-0" />
                         <div class="flex-1 min-w-0">
                             <h3 class="font-medium text-gray-900 dark:text-white truncate">{{ file.path|basename }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ file.size|show_size }} • {{ file.last_modified|time_diff }}</p>
                         </div>
                     {% else %}
+                        {% if not parentDirectory.public %}
+                            <twig:ux:icon name="fa6-solid:lock" class="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mr-1" />
+                        {% endif %}
                         <twig:ux:icon name="line-md:folder-filled" class="w-8 h-8 flex-shrink-0" />
                         <div class="flex-1 min-w-0">
                             <button
@@ -260,7 +277,9 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        <span class="text-sm text-gray-600 dark:text-gray-300">Dossier privé</span>
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Dossier privé</span>
+                        </div>
                     {% endif %}
                 </div>
 
