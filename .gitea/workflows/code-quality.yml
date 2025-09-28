@@ -31,7 +31,7 @@ jobs:
         run: |
           php bin/console cache:warmup --env=dev
       - name: Run Rector
-        run: vendor/bin/rector process --dry-run -vvv
+        run: vendor/bin/rector process --dry-run
 
   phpstan:
     runs-on: ubuntu-latest
