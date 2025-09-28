@@ -1,0 +1,51 @@
+
+name: Apply PHP CS Fixer
+
+on: [push]
+
+jobs:
+  php-cs-fixer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run PHP CS Fixer
+        uses: docker://oskarstark/php-cs-fixer-ga@sha256:c29adac93ee58e52ddaa5630337e3084bedf8aa8ed5cf3022753f7bd7f691981
+        with:
+          args: --diff --dry-run
+
+  rector:
+    name: Rector
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP with pre-release PECL extension
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - name: Download Composer
+        run: php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && php composer-setup.php && php -r "unlink('composer-setup.php');"
+      - name: Install Dependencies
+        run: php composer.phar install
+      - name: Cache Symfony dev container
+        run: |
+          php bin/console cache:warmup --env=dev
+      - name: Run Rector
+        run: vendor/bin/rector --dry-run
+
+  phpstan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Composer
+        run: php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && php composer-setup.php && php -r "unlink('composer-setup.php');"
+      - name: Install Dependencies
+        run: php composer.phar install
+      - name: Cache Symfony dev container
+        run: |
+          php bin/console cache:warmup --env=dev
+      - uses: php-actions/phpstan@v3
+        with:
+          php-version: '8.2'
+          memory_limit: 512M
+
