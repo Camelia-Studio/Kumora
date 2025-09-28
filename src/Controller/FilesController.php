@@ -14,6 +14,7 @@ use App\Form\RenameType;
 use App\Form\UploadType;
 use App\Repository\AccessGroupRepository;
 use App\Repository\ParentDirectoryRepository;
+use App\Service\UserActionLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
@@ -38,6 +39,7 @@ class FilesController extends AbstractController
         private readonly ParentDirectoryRepository $parentDirectoryRepository,
         private readonly AccessGroupRepository     $accessGroupRepository,
         private readonly Filesystem $filesystem,
+        private readonly UserActionLogger $actionLogger,
         private readonly string $projectDir,
     ) {
     }
@@ -118,6 +120,8 @@ class FilesController extends AbstractController
         if ('' !== $file && !str_starts_with($file, '.') && $defaultAdapter->fileExists($file)) {
             $defaultAdapter->delete($file);
 
+            $this->actionLogger->logFileDelete($file);
+
             $this->addFlash('success', 'Le fichier a bien été supprimé.');
         } else {
             $this->addFlash('error', 'Le fichier n\'existe pas.');
@@ -150,6 +154,8 @@ class FilesController extends AbstractController
                 $this->entityManager->remove($parentDir);
                 $this->entityManager->flush();
             }
+
+            $this->actionLogger->logFolderDelete($path);
 
             $this->addFlash('success', 'Le dossier a bien été supprimé.');
         } else {
@@ -205,6 +211,12 @@ class FilesController extends AbstractController
 
             $defaultAdapter->move($filepath, $newPath);
 
+            $this->actionLogger->logFileRename(
+                pathinfo($filepath, PATHINFO_BASENAME),
+                $newName,
+                $newPath
+            );
+
             $this->addFlash('success', 'Le fichier a bien été renommé.');
 
             return $this->redirectToRoute('app_files_index', [
@@ -259,6 +271,10 @@ class FilesController extends AbstractController
             $defaultAdapter->createDirectory($basePath . '/' . $name);
 
             $defaultAdapter->write($basePath . '/' . $name . '/.gitkeep', '');
+
+            // Log de l'action de création de dossier
+            $folderPath = '' === $basePath ? $name : $basePath . '/' . $name;
+            $this->actionLogger->logFolderCreate($folderPath);
 
             // si basePath est vide, on crée un parentDirectory
             if ('' === $basePath) {
@@ -331,6 +347,12 @@ class FilesController extends AbstractController
 
             $defaultAdapter->move($filepath, $newPath);
 
+            $this->actionLogger->logFolderRename(
+                pathinfo($filepath, PATHINFO_BASENAME),
+                $newName,
+                $newPath
+            );
+
             $this->addFlash('success', 'Le dossier a bien été renommé.');
 
             return $this->redirectToRoute('app_files_index', [
@@ -385,6 +407,10 @@ class FilesController extends AbstractController
             foreach ($files as $file) {
                 $filename = $file->getClientOriginalName();
                 $file->move($this->projectDir . '/uploads/' . $path, $filename);
+
+                // Log de l'action d'upload
+                $filePath = $path . '/' . $filename;
+                $this->actionLogger->logFileUpload($filePath, $file);
             }
 
             $this->addFlash('success', 'Les ' . count($files) . ' fichiers ont bien été envoyés.');
@@ -441,6 +467,9 @@ class FilesController extends AbstractController
             $datas = $form->getData();
             $typeDossier = $form->get('typeDossier')->getData();
 
+            $oldPermissions = $parentDir->isPublic() ? 'public' : 'private';
+            $newPermissions = 'shared' === $typeDossier ? 'public' : 'private';
+
             if ('shared' === $typeDossier) {
                 $datas->setIsPublic(true);
             } else {
@@ -453,6 +482,12 @@ class FilesController extends AbstractController
             $this->entityManager->persist($datas);
 
             $this->entityManager->flush();
+
+            $this->actionLogger->logPermissionChange(
+                $parentDir->getName(),
+                $oldPermissions,
+                $newPermissions
+            );
 
             $this->addFlash('success', 'Les permissions ont bien été modifiées.');
 
@@ -553,6 +588,11 @@ class FilesController extends AbstractController
                 }
 
                 $this->filesystem->move($path, $newPath . '/' . basename($path));
+
+                $this->actionLogger->logFileMove(
+                    $path,
+                    $newPath . '/' . basename($path)
+                );
             } else {
                 // Si le dossier existe déjà, on envoie une erreur
                 if ($this->filesystem->directoryExists($newPath . '/' . basename($path))) {
@@ -591,6 +631,11 @@ class FilesController extends AbstractController
                 }
 
                 $this->filesystem->move($path, $newPath . '/' . basename($path));
+
+                $this->actionLogger->logFolderMove(
+                    $path,
+                    $newPath . '/' . basename($path)
+                );
 
                 if ($parentDir->getName() === $path) {
                     $this->entityManager->remove($parentDir);

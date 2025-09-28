@@ -9,6 +9,7 @@ use App\DTO\PasswordDTO;
 use App\Entity\User;
 use App\Form\EmailFormType;
 use App\Form\PasswordFormType;
+use App\Repository\UserActionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +23,7 @@ class ProfileController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly UserActionRepository $userActionRepository,
     ) {
     }
 
@@ -34,8 +36,18 @@ class ProfileController extends AbstractController
          */
         $user = $this->getUser();
 
+        // Récupération de l'historique des actions récentes
+        $recentActions = $this->userActionRepository->findRecentActionsForUser($user, 10);
+
+        // Statistiques des actions
+        $actionStats = $this->userActionRepository->getActionTypeStatsForUser($user);
+        $totalActions = $this->userActionRepository->countActionsForUser($user);
+
         return $this->render('profile/index.html.twig', [
             'user' => $user,
+            'recent_actions' => $recentActions,
+            'action_stats' => $actionStats,
+            'total_actions' => $totalActions,
         ]);
     }
 

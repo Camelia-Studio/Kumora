@@ -44,6 +44,7 @@
         "symfony/twig-bundle": "7.2.*",
         "symfony/uid": "7.2.*",
         "symfony/ux-autocomplete": "^2.30",
+        "symfony/ux-chartjs": "^2.30",
         "symfony/ux-dropzone": "^2.30.0",
         "symfony/ux-icons": "^2.30",
         "symfony/ux-live-component": "^2.30",

@@ -1,0 +1,233 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Service;
+
+use App\Entity\User;
+use App\Entity\UserAction;
+use App\Repository\UserActionRepository;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+
+class UserActionLogger
+{
+    public function __construct(
+        private readonly UserActionRepository $userActionRepository,
+        private readonly Security $security
+    ) {
+    }
+
+    public function logAction(
+        string $actionType,
+        string $description,
+        ?string $targetPath = null,
+        ?string $oldValue = null,
+        ?string $newValue = null,
+        ?array $metadata = null,
+        ?User $user = null
+    ): void {
+        $user = $user ?? $this->security->getUser();
+        if (!$user instanceof User) {
+            return;
+        }
+
+        $userAction = new UserAction();
+        $userAction->setUser($user)
+            ->setActionType($actionType)
+            ->setDescription($description)
+            ->setTargetPath($targetPath)
+            ->setOldValue($oldValue)
+            ->setNewValue($newValue)
+            ->setMetadata($metadata);
+
+        $this->userActionRepository->save($userAction, true);
+    }
+
+    public function logFolderCreate(string $folderPath, ?array $metadata = null): void
+    {
+        $this->logAction(
+            UserAction::ACTION_FOLDER_CREATE,
+            "Création du dossier '{$folderPath}'",
+            $folderPath,
+            null,
+            null,
+            $metadata
+        );
+    }
+
+    public function logFileUpload(string $filePath, ?UploadedFile $uploadedFile = null): void
+    {
+        $metadata = [];
+
+        if ($uploadedFile !== null) {
+            // Informations sûres de l'UploadedFile
+            $metadata['original_name'] = $uploadedFile->getClientOriginalName();
+            $metadata['mime_type'] = $uploadedFile->getClientMimeType();
+
+            // Taille (éviter getSize() qui peut échouer sur fichiers temporaires)
+            $fileSize = $this->getFileSizeFromUpload($uploadedFile);
+            if ($fileSize !== null) {
+                $metadata['file_size'] = $fileSize;
+                $metadata['file_size_formatted'] = $this->formatFileSize($fileSize);
+            }
+
+            // Extension
+            if ($uploadedFile->getClientOriginalExtension()) {
+                $metadata['extension'] = $uploadedFile->getClientOriginalExtension();
+            }
+
+            // Erreur d'upload s'il y en a une
+            if ($uploadedFile->getError() !== UPLOAD_ERR_OK) {
+                $metadata['upload_error'] = $this->getUploadErrorMessage($uploadedFile->getError());
+            }
+        }
+
+        $this->logAction(
+            UserAction::ACTION_FILE_UPLOAD,
+            "Upload du fichier '{$filePath}'",
+            $filePath,
+            null,
+            null,
+            !empty($metadata) ? $metadata : null
+        );
+    }
+
+    private function getFileSizeFromUpload(UploadedFile $uploadedFile): ?int
+    {
+        // Créer un dossier temporaire si nécessaire
+        $tempDir = sys_get_temp_dir() . '/kumora_uploads';
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        // Générer un nom de fichier temporaire unique
+        $tempFile = $tempDir . '/' . uniqid('upload_', true) . '.' . $uploadedFile->getClientOriginalExtension();
+
+        try {
+            // Copier le fichier uploadé vers notre dossier temporaire (sans le déplacer)
+            if (copy($uploadedFile->getPathname(), $tempFile)) {
+                // Récupérer la taille du fichier copié
+                $fileSize = filesize($tempFile);
+
+                // Nettoyer le fichier temporaire immédiatement
+                if (file_exists($tempFile)) {
+                    unlink($tempFile);
+                }
+
+                return $fileSize !== false ? $fileSize : null;
+            }
+        } catch (\Exception $e) {
+            // Nettoyer en cas d'erreur
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+        }
+
+        // Fallback : essayer les méthodes standard
+        try {
+            return $uploadedFile->getSize();
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    private function getUploadErrorMessage(int $errorCode): string
+    {
+        return match ($errorCode) {
+            UPLOAD_ERR_INI_SIZE => 'Le fichier dépasse la taille maximale autorisée par PHP',
+            UPLOAD_ERR_FORM_SIZE => 'Le fichier dépasse la taille maximale autorisée par le formulaire',
+            UPLOAD_ERR_PARTIAL => 'Le fichier n\'a été téléchargé que partiellement',
+            UPLOAD_ERR_NO_FILE => 'Aucun fichier n\'a été téléchargé',
+            UPLOAD_ERR_NO_TMP_DIR => 'Dossier temporaire manquant',
+            UPLOAD_ERR_CANT_WRITE => 'Échec de l\'écriture du fichier sur le disque',
+            UPLOAD_ERR_EXTENSION => 'Une extension PHP a arrêté l\'upload du fichier',
+            default => 'Erreur d\'upload inconnue: ' . $errorCode,
+        };
+    }
+
+    private function formatFileSize(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+
+        $bytes /= (1 << (10 * $pow));
+
+        return round($bytes, 2) . ' ' . $units[$pow];
+    }
+
+    public function logFileMove(string $oldPath, string $newPath): void
+    {
+        $this->logAction(
+            UserAction::ACTION_FILE_MOVE,
+            "Déplacement du fichier de '{$oldPath}' vers '{$newPath}'",
+            $newPath,
+            $oldPath,
+            $newPath
+        );
+    }
+
+    public function logFolderMove(string $oldPath, string $newPath): void
+    {
+        $this->logAction(
+            UserAction::ACTION_FOLDER_MOVE,
+            "Déplacement du dossier de '{$oldPath}' vers '{$newPath}'",
+            $newPath,
+            $oldPath,
+            $newPath
+        );
+    }
+
+    public function logFileRename(string $oldName, string $newName, string $path): void
+    {
+        $this->logAction(
+            UserAction::ACTION_FILE_RENAME,
+            "Renommage du fichier '{$oldName}' en '{$newName}'",
+            $path,
+            $oldName,
+            $newName
+        );
+    }
+
+    public function logFolderRename(string $oldName, string $newName, string $path): void
+    {
+        $this->logAction(
+            UserAction::ACTION_FOLDER_RENAME,
+            "Renommage du dossier '{$oldName}' en '{$newName}'",
+            $path,
+            $oldName,
+            $newName
+        );
+    }
+
+    public function logFileDelete(string $filePath): void
+    {
+        $this->logAction(
+            UserAction::ACTION_FILE_DELETE,
+            "Suppression du fichier '{$filePath}'",
+            $filePath
+        );
+    }
+
+    public function logFolderDelete(string $folderPath): void
+    {
+        $this->logAction(
+            UserAction::ACTION_FOLDER_DELETE,
+            "Suppression du dossier '{$folderPath}'",
+            $folderPath
+        );
+    }
+
+    public function logPermissionChange(string $folderPath, string $oldPermissions, string $newPermissions): void
+    {
+        $this->logAction(
+            UserAction::ACTION_PERMISSION_CHANGE,
+            "Modification des permissions du dossier '{$folderPath}'",
+            $folderPath,
+            $oldPermissions,
+            $newPermissions
+        );
+    }
+}

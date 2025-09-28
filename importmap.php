@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * Returns the importmap for this application.
  *
@@ -67,5 +65,8 @@ return [
     'tom-select/dist/css/tom-select.bootstrap4.css' => [
         'version' => '2.4.3',
         'type' => 'css',
+    ],
+    'chart.js' => [
+        'version' => '3.9.1',
     ],
 ];
