@@ -31,7 +31,7 @@ jobs:
         run: |
           php bin/console cache:warmup --env=dev
       - name: Run Rector
-        run: vendor/bin/rector process --dry-run
+        run: vendor/bin/rector process --dry-run -vvv
 
   phpstan:
     runs-on: ubuntu-latest
@@ -48,8 +48,6 @@ jobs:
       - name: Cache Symfony dev container
         run: |
           php bin/console cache:warmup --env=dev
-      - uses: php-actions/phpstan@v3
-        with:
-          php-version: '8.2'
-          memory_limit: 512M
+      - name: Run Rector
+        run: vendor/bin/phpstan --memory-limit=512M
 
