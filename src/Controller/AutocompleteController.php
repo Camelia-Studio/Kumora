@@ -20,10 +20,21 @@ class AutocompleteController extends AbstractController
      * @throws FilesystemException
      */
     #[Route('/autocomplete/path/{type}', name: 'chemin_autocomplete')]
-    public function autocomplete(Filesystem $defaultAdapter, ParentDirectoryRepository $parentDirectoryRepository, #[MapEntity(id: 'type')] string $type, #[MapQueryParameter('query')] string $q): Response
-    {
+    public function autocomplete(
+        Filesystem $defaultAdapter,
+        ParentDirectoryRepository $parentDirectoryRepository,
+        #[MapEntity(id: 'type')] string $type,
+        #[MapQueryParameter('query')] string $q,
+        #[MapQueryParameter('exclude')] string $exclude = ''
+    ): Response {
         if (!in_array($type, ['directory', 'file'], true)) {
             throw $this->createNotFoundException('Type not found');
+        }
+
+        // Décoder les chemins à exclure
+        $excludePaths = '' !== $exclude ? json_decode($exclude, true) : [];
+        if (!is_array($excludePaths)) {
+            $excludePaths = [];
         }
 
         $paths = [];
@@ -41,7 +52,18 @@ class AutocompleteController extends AbstractController
                 $parentDirectory = $parentDirectoryRepository->findOneBy(['name' => $parts[0]]);
 
                 if (null !== $parentDirectory && $this->isGranted('file_write', $parentDirectory)) {
-                    $paths[] = $file['path'];
+                    // Ne pas inclure les chemins à exclure et leurs sous-dossiers
+                    $shouldExclude = false;
+                    foreach ($excludePaths as $excludePath) {
+                        if ($file['path'] === $excludePath || str_starts_with((string) $file['path'], $excludePath . '/')) {
+                            $shouldExclude = true;
+                            break;
+                        }
+                    }
+
+                    if (!$shouldExclude) {
+                        $paths[] = $file['path'];
+                    }
                 }
             }
         }

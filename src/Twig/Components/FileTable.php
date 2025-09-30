@@ -40,6 +40,12 @@ final class FileTable
     #[LiveProp(writable: true, onUpdated: 'getFiles', url: true)]
     public string $search = '';
 
+    /**
+     * @var array<string>
+     */
+    #[LiveProp(writable: true)]
+    public array $selectedFiles = [];
+
     public ?ParentDirectory $parentDir = null;
 
     /**
@@ -315,5 +321,32 @@ final class FileTable
             $this->sortBy = $column;
             $this->sortDirection = 'asc';
         }
+    }
+
+    #[LiveAction]
+    public function toggleSelection(#[LiveArg] string $filePath): void
+    {
+        $index = array_search($filePath, $this->selectedFiles, true);
+        if (false !== $index) {
+            unset($this->selectedFiles[$index]);
+            $this->selectedFiles = array_values($this->selectedFiles);
+        } else {
+            $this->selectedFiles[] = $filePath;
+        }
+    }
+
+    #[LiveAction]
+    public function toggleSelectAll(): void
+    {
+        $files = $this->getFiles();
+        $allPaths = array_map(static fn ($file) => $file['path'], $files);
+
+        $this->selectedFiles = count($this->selectedFiles) === count($allPaths) ? [] : $allPaths;
+    }
+
+    #[LiveAction]
+    public function clearSelection(): void
+    {
+        $this->selectedFiles = [];
     }
 }

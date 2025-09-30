@@ -23,6 +23,8 @@ class MoveFileType extends AbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $autocompleteUrl = $options['autocomplete_url'] ?? '/kumora/autocomplete/path/file';
+
         $builder
             ->add('path', TextType::class, [
                 'label' => 'Nouveau chemin',
@@ -30,7 +32,7 @@ class MoveFileType extends AbstractType
                     'placeholder' => 'Saisissez le nouveau chemin',
                 ],
                 'autocomplete' => true,
-                'autocomplete_url' => '/kumora/autocomplete/path/file',
+                'autocomplete_url' => $autocompleteUrl,
                 'tom_select_options' => [
                     'create' => true,
                     'createOnBlur' => true,
@@ -46,7 +48,8 @@ class MoveFileType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            // Configure your form options here
+            'autocomplete_url' => null,
         ]);
+        $resolver->setAllowedTypes('autocomplete_url', ['null', 'string']);
     }
 }

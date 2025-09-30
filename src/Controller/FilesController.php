@@ -659,4 +659,221 @@ class FilesController extends AbstractController
             'folderPath' => $folderPath,
         ]);
     }
+
+    /**
+     * @throws FilesystemException
+     */
+    #[Route('/files/bulk-delete', name: 'app_files_bulk_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function bulkDelete(Request $request, Filesystem $defaultAdapter): RedirectResponse
+    {
+        $files = json_decode((string) $request->request->get('files', '[]'), true);
+        $currentPath = $request->request->get('currentPath', '');
+
+        if (!is_array($files) || 0 === count($files)) {
+            $this->addFlash('error', 'Aucun fichier sélectionné.');
+
+            return $this->redirectToRoute('app_files_index', ['path' => $currentPath]);
+        }
+
+        $deletedCount = 0;
+        $errors = [];
+
+        foreach ($files as $file) {
+            $file = $this->normalizePath((string) $file);
+
+            if ('' === $file || str_starts_with($file, '.')) {
+                continue;
+            }
+
+            // Vérifier les permissions
+            $realPath = explode('/', $file);
+            if (count($realPath) > 1) {
+                $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
+
+                if (null === $parentDir || !$this->isGranted('file_write', $parentDir)) {
+                    $errors[] = basename($file) . ' (permissions insuffisantes)';
+                    continue;
+                }
+            }
+
+            try {
+                if ($defaultAdapter->fileExists($file)) {
+                    $defaultAdapter->delete($file);
+                    $this->actionLogger->logFileDelete($file);
+                    ++$deletedCount;
+                } elseif ($defaultAdapter->directoryExists($file)) {
+                    $defaultAdapter->deleteDirectory($file);
+                    $this->actionLogger->logFolderDelete($file);
+                    ++$deletedCount;
+                }
+            } catch (\Exception) {
+                $errors[] = basename($file) . ' (erreur lors de la suppression)';
+            }
+        }
+
+        if ($deletedCount > 0) {
+            $this->addFlash('success', sprintf('%d élément(s) supprimé(s) avec succès.', $deletedCount));
+        }
+
+        if (count($errors) > 0) {
+            $this->addFlash('error', 'Erreurs: ' . implode(', ', $errors));
+        }
+
+        return $this->redirectToRoute('app_files_index', ['path' => $currentPath]);
+    }
+
+    /**
+     * @throws FilesystemException
+     */
+    #[Route('/files/bulk-move', name: 'app_files_bulk_move', methods: ['POST', 'GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function bulkMove(Request $request, Filesystem $defaultAdapter): Response
+    {
+        if ($request->isMethod('POST')) {
+            $files = json_decode((string) $request->request->get('files', '[]'), true);
+            $currentPath = $request->request->get('currentPath', '');
+
+            if (!is_array($files) || 0 === count($files)) {
+                $this->addFlash('error', 'Aucun fichier sélectionné.');
+
+                return $this->redirectToRoute('app_files_index', ['path' => $currentPath]);
+            }
+
+            // Nettoyer puis stocker les fichiers sélectionnés en session
+            $request->getSession()->remove('bulk_move_files');
+            $request->getSession()->remove('bulk_move_source_path');
+            $request->getSession()->set('bulk_move_files', $files);
+            $request->getSession()->set('bulk_move_source_path', $currentPath);
+
+            return $this->redirectToRoute('app_files_bulk_move');
+        }
+
+        $files = $request->getSession()->get('bulk_move_files', []);
+        $sourcePath = $request->getSession()->get('bulk_move_source_path', '');
+
+        if (!is_array($files) || 0 === count($files)) {
+            $this->addFlash('error', 'Aucun fichier à déplacer.');
+
+            return $this->redirectToRoute('app_files_index');
+        }
+
+        // Construire l'URL d'autocomplétion avec les fichiers à exclure
+        $autocompleteUrl = '/kumora/autocomplete/path/file?exclude=' . urlencode(json_encode($files));
+
+        $form = $this->createForm(MoveFileType::class, null, [
+            'autocomplete_url' => $autocompleteUrl,
+        ]);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $destination = $form->get('path')->getData();
+            $destination = $this->normalizePath($destination);
+
+            if (!$defaultAdapter->directoryExists($destination)) {
+                $this->addFlash('error', 'Le dossier de destination n\'existe pas.');
+
+                return $this->redirectToRoute('app_files_bulk_move');
+            }
+
+            $movedCount = 0;
+            $errors = [];
+
+            foreach ($files as $file) {
+                $file = $this->normalizePath((string) $file);
+
+                if ('' === $file || str_starts_with($file, '.')) {
+                    continue;
+                }
+
+                // Vérifier qu'on ne déplace pas un dossier dans lui-même ou ses sous-dossiers
+                if ($defaultAdapter->directoryExists($file) && str_starts_with($destination . '/', $file . '/')) {
+                    $errors[] = basename($file) . ' (impossible de déplacer un dossier dans lui-même)';
+                    continue;
+                }
+
+                // Vérifier les permissions source
+                $realPath = explode('/', $file);
+                if (count($realPath) > 1) {
+                    $sourceParentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
+
+                    if (null === $sourceParentDir || !$this->isGranted('file_write', $sourceParentDir)) {
+                        $errors[] = basename($file) . ' (permissions source insuffisantes)';
+                        continue;
+                    }
+                }
+
+                // Vérifier les permissions destination
+                $destPath = explode('/', $destination);
+                if (count($destPath) > 0) {
+                    $destParentDir = $this->parentDirectoryRepository->findOneBy(['name' => $destPath[0]]);
+
+                    if (null === $destParentDir || !$this->isGranted('file_write', $destParentDir)) {
+                        $errors[] = basename($file) . ' (permissions destination insuffisantes)';
+                        continue;
+                    }
+                }
+
+                try {
+                    $fileName = basename($file);
+                    $newPath = $destination . '/' . $fileName;
+
+                    if ($defaultAdapter->fileExists($file)) {
+                        $defaultAdapter->move($file, $newPath);
+                        $this->actionLogger->logFileMove($file, $newPath);
+                        ++$movedCount;
+                    } elseif ($defaultAdapter->directoryExists($file)) {
+                        // Pour les dossiers, on doit les copier puis supprimer l'original
+                        $this->copyDirectory($defaultAdapter, $file, $newPath);
+                        $defaultAdapter->deleteDirectory($file);
+                        $this->actionLogger->logFolderMove($file, $newPath);
+                        ++$movedCount;
+                    }
+                } catch (\Exception) {
+                    $errors[] = basename($file) . ' (erreur lors du déplacement)';
+                }
+            }
+
+            // Nettoyer la session
+            $request->getSession()->remove('bulk_move_files');
+            $request->getSession()->remove('bulk_move_source_path');
+
+            if ($movedCount > 0) {
+                $this->addFlash('success', sprintf('%d élément(s) déplacé(s) avec succès.', $movedCount));
+            }
+
+            if (count($errors) > 0) {
+                $this->addFlash('error', 'Erreurs: ' . implode(', ', $errors));
+            }
+
+            return $this->redirectToRoute('app_files_index', ['path' => $sourcePath]);
+        }
+
+        return $this->render('files/bulk_move.html.twig', [
+            'form' => $form->createView(),
+            'files' => $files,
+            'sourcePath' => $sourcePath,
+        ]);
+    }
+
+    /**
+     * @throws FilesystemException
+     */
+    private function copyDirectory(Filesystem $filesystem, string $source, string $destination): void
+    {
+        $files = $filesystem->listContents($source, true);
+
+        foreach ($files as $file) {
+            $path = $file['path'];
+            $newPath = str_replace($source, $destination, $path);
+
+            if ('file' === $file['type']) {
+                $content = $filesystem->read($path);
+                $filesystem->write($newPath, $content);
+            } else {
+                $filesystem->createDirectory($newPath);
+            }
+        }
+    }
 }

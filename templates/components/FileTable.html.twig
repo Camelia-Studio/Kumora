@@ -1,4 +1,39 @@
 <div{{ attributes }}>
+    {# Bulk actions toolbar #}
+    {% if selectedFiles|length > 0 %}
+        <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-600 dark:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-4">
+            <span class="font-medium">{{ selectedFiles|length }} élément(s) sélectionné(s)</span>
+            <div class="flex gap-2">
+                <form method="post" action="{{ path('app_files_bulk_move') }}" class="inline">
+                    <input type="hidden" name="files" value="{{ selectedFiles|json_encode }}">
+                    <input type="hidden" name="currentPath" value="{{ path }}">
+                    <button type="submit" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-white hover:bg-gray-100 rounded-lg transition-colors">
+                        <twig:ux:icon name="mdi:file-move" class="w-4 h-4 mr-1.5" />
+                        Déplacer
+                    </button>
+                </form>
+                <form method="post" action="{{ path('app_files_bulk_delete') }}" class="inline" id="bulkDeleteForm">
+                    <input type="hidden" name="files" value="{{ selectedFiles|json_encode }}">
+                    <input type="hidden" name="currentPath" value="{{ path }}">
+                    <button
+                        type="button"
+                        onclick="customConfirm('Voulez-vous vraiment supprimer ces ' + {{ selectedFiles|length }} + ' élément(s) ?', 'Suppression en masse').then(confirmed => { if (confirmed) { document.getElementById('bulkDeleteForm').submit(); } })"
+                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                        <twig:ux:icon name="fa6-solid:trash-can" class="w-4 h-4 mr-1.5" />
+                        Supprimer
+                    </button>
+                </form>
+                <button
+                    type="button"
+                    data-action="live#action"
+                    data-live-action-param="clearSelection"
+                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 rounded-lg transition-colors">
+                    <twig:ux:icon name="fa6-solid:xmark" class="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+    {% endif %}
+
     <div class="flex flex-col gap-4">
         {# Search bar #}
         <div class="relative">
@@ -71,6 +106,15 @@
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
+                <th scope="col" class="px-6 py-3 w-12">
+                    <input
+                        type="checkbox"
+                        data-action="live#action"
+                        data-live-action-param="toggleSelectAll"
+                        {{ selectedFiles|length == this.files|length and this.files|length > 0 ? 'checked' : '' }}
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+                        title="Tout sélectionner">
+                </th>
                 <th scope="col" class="px-6 py-3">
                     <button
                         type="button"
@@ -147,6 +191,15 @@
                     {% set parentDirectory = this.parentDir %}
                 {% endif %}
                 <tr class="{{ parentDirectory.public ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900' }} border-b dark:border-gray-700 group">
+                    <td class="px-6 py-4">
+                        <input
+                            type="checkbox"
+                            data-action="live#action"
+                            data-live-action-param="toggleSelection"
+                            data-live-file-path-param="{{ file.path }}"
+                            {{ file.path in selectedFiles ? 'checked' : '' }}
+                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
+                    </td>
                     {% if file.type == 'file' %}
                         <td class="px-6 py-4 font-medium light:text-gray-900 cursor-pointer">
                             <button onclick="openPreviewModal('{{ file.path|basename }}', '{{ file.previewUrl }}', '{{ file.url }}')" class="flex gap-2 items-center w-full h-full duration-300 group-[:hover:not(:has(.links-total:hover))]:text-blue-900  dark:group-[:hover:not(:has(.links-total:hover))]:text-blue-700 text-left cursor-pointer">
@@ -363,6 +416,13 @@
             <div class="{{ parentDirectory.public ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-600' }} border rounded-lg p-4">
                 {# File Header #}
                 <div class="flex items-center gap-3 mb-3">
+                    <input
+                        type="checkbox"
+                        data-action="live#action"
+                        data-live-action-param="toggleSelection"
+                        data-live-file-path-param="{{ file.path }}"
+                        {{ file.path in selectedFiles ? 'checked' : '' }}
+                        class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 cursor-pointer flex-shrink-0">
                     {% if file.type == 'file' %}
                         {% if not parentDirectory.public %}
                             <twig:ux:icon name="fa6-solid:lock" class="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mr-1" />
