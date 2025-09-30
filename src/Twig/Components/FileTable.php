@@ -11,6 +11,8 @@ use League\Flysystem\FilesystemException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
+use Symfony\UX\LiveComponent\Attribute\LiveAction;
+use Symfony\UX\LiveComponent\Attribute\LiveArg;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
@@ -28,6 +30,12 @@ final class FileTable
 
     #[LiveProp(writable: true, onUpdated: 'getFiles', url: true)]
     public string $path = '';
+
+    #[LiveProp(writable: true, onUpdated: 'getFiles', url: true)]
+    public string $sortBy = 'name';
+
+    #[LiveProp(writable: true, onUpdated: 'getFiles', url: true)]
+    public string $sortDirection = 'asc';
 
     public ?ParentDirectory $parentDir = null;
 
@@ -92,13 +100,8 @@ final class FileTable
             }
         }
 
-        // On trie par type puis par nom
-        usort($realFiles, static function ($a, $b) {
-            if ($a['type'] === $b['type']) {
-                return $a['path'] <=> $b['path'];
-            }
-            return $a['type'] <=> $b['type'];
-        });
+        // Tri des fichiers selon les critères sélectionnés
+        $this->sortFiles($realFiles);
 
         return $realFiles;
     }
@@ -136,5 +139,80 @@ final class FileTable
         }
 
         return $size;
+    }
+
+    private function sortFiles(array &$files): void
+    {
+        usort($files, function ($a, $b) {
+            // Toujours mettre les dossiers en premier, sauf si on trie par type
+            if ('type' !== $this->sortBy && $a['type'] !== $b['type']) {
+                return 'dir' === $a['type'] ? -1 : 1;
+            }
+
+            $result = match ($this->sortBy) {
+                'name' => basename((string) $a['path']) <=> basename((string) $b['path']),
+                'size' => $a['size'] <=> $b['size'],
+                'date' => $a['last_modified'] <=> $b['last_modified'],
+                'type' => $this->compareFileTypes($a, $b),
+                default => basename((string) $a['path']) <=> basename((string) $b['path'])
+            };
+
+            // Si c'est le même type et le même critère de tri, trier par nom en second
+            if (0 === $result && 'name' !== $this->sortBy) {
+                $result = basename((string) $a['path']) <=> basename((string) $b['path']);
+            }
+
+            return 'desc' === $this->sortDirection ? -$result : $result;
+        });
+    }
+
+    private function compareFileTypes(array $a, array $b): int
+    {
+        // Les dossiers d'abord
+        if ($a['type'] !== $b['type']) {
+            return 'dir' === $a['type'] ? -1 : 1;
+        }
+
+        // Si ce sont deux dossiers, trier par nom
+        if ('dir' === $a['type']) {
+            return 0;
+        }
+
+        // Pour les fichiers, obtenir leur catégorie de type
+        $typeA = $this->getFileTypeCategory(basename((string) $a['path']));
+        $typeB = $this->getFileTypeCategory(basename((string) $b['path']));
+
+        return $typeA <=> $typeB;
+    }
+
+    private function getFileTypeCategory(string $filename): string
+    {
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+
+        return match ($extension) {
+            'jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'svg' => 'image',
+            'mp4', 'avi', 'mov', 'webm' => 'video',
+            'mp3', 'wav', 'm4a' => 'audio',
+            'pdf' => 'pdf',
+            'doc', 'docx', 'odt' => 'document',
+            'xlsx', 'xls', 'ods', 'csv' => 'spreadsheet',
+            'pptx', 'ppt', 'odp' => 'presentation',
+            'zip', 'rar', 'tar', 'gz', '7z' => 'archive',
+            'torrent' => 'torrent',
+            'txt', 'md' => 'text',
+            'html', 'htm', 'css', 'js', 'json', 'xml', 'yaml', 'yml', 'php', 'py', 'java', 'c', 'cpp', 'cs', 'rb', 'go', 'rs' => 'code',
+            default => 'other',
+        };
+    }
+
+    #[LiveAction]
+    public function toggleSort(#[LiveArg] string $column): void
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDirection = 'asc' === $this->sortDirection ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
+        }
     }
 }

@@ -43,13 +43,64 @@
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
                 <th scope="col" class="px-6 py-3">
-                    Nom
+                    <button
+                        type="button"
+                        data-action="live#action"
+                        data-live-action-param="toggleSort"
+                        data-live-column-param="name"
+                        class="flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-200 transition-colors group">
+                        <span>Nom</span>
+                        {% if sortBy == 'name' %}
+                            <twig:ux:icon name="fa6-solid:chevron-{{ sortDirection == 'asc' ? 'up' : 'down' }}" class="w-3 h-3" />
+                        {% else %}
+                            <twig:ux:icon name="fa6-solid:sort" class="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                        {% endif %}
+                    </button>
                 </th>
                 <th scope="col" class="px-6 py-3">
-                    Taille
+                    <button
+                        type="button"
+                        data-action="live#action"
+                        data-live-action-param="toggleSort"
+                        data-live-column-param="size"
+                        class="flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-200 transition-colors group">
+                        <span>Taille</span>
+                        {% if sortBy == 'size' %}
+                            <twig:ux:icon name="fa6-solid:chevron-{{ sortDirection == 'asc' ? 'up' : 'down' }}" class="w-3 h-3" />
+                        {% else %}
+                            <twig:ux:icon name="fa6-solid:sort" class="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                        {% endif %}
+                    </button>
                 </th>
                 <th scope="col" class="px-6 py-3">
-                    Dernière modification
+                    <button
+                        type="button"
+                        data-action="live#action"
+                        data-live-action-param="toggleSort"
+                        data-live-column-param="date"
+                        class="flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-200 transition-colors group">
+                        <span>Dernière modification</span>
+                        {% if sortBy == 'date' %}
+                            <twig:ux:icon name="fa6-solid:chevron-{{ sortDirection == 'asc' ? 'up' : 'down' }}" class="w-3 h-3" />
+                        {% else %}
+                            <twig:ux:icon name="fa6-solid:sort" class="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                        {% endif %}
+                    </button>
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    <button
+                        type="button"
+                        data-action="live#action"
+                        data-live-action-param="toggleSort"
+                        data-live-column-param="type"
+                        class="flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-200 transition-colors group">
+                        <span>Type</span>
+                        {% if sortBy == 'type' %}
+                            <twig:ux:icon name="fa6-solid:chevron-{{ sortDirection == 'asc' ? 'up' : 'down' }}" class="w-3 h-3" />
+                        {% else %}
+                            <twig:ux:icon name="fa6-solid:sort" class="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                        {% endif %}
+                    </button>
                 </th>
                 <th scope="col" class="px-6 py-3">
                     Groupes d'accès
@@ -82,6 +133,12 @@
                         </td>
                         <td class="px-6 py-4">
                             <a href="{{ file.previewUrl }}" target="_blank" class="w-full h-full block">{{ file.last_modified|time_diff }}</a>
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="{{ file.previewUrl }}" target="_blank" class="w-full h-full block">
+                                {% set fileType = getFileType(file.path|basename) %}
+                                <span class="text-sm text-gray-600 dark:text-gray-400">{{ fileType.label }}</span>
+                            </a>
                         </td>
                         <td class="px-6 py-4">
                             <a href="{{ file.previewUrl }}" target="_blank" class="w-full h-full block">
@@ -135,6 +192,14 @@
                                data-model="path"
                                data-value="{{ file.path }}"
                                data-action="live#update" class="text-left h-full w-full cursor-pointer">{{ file.last_modified|time_diff }}</button>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button type="button"
+                               data-model="path"
+                               data-value="{{ file.path }}"
+                               data-action="live#update" class="text-left h-full w-full cursor-pointer">
+                                <span class="text-sm text-gray-600 dark:text-gray-400">Dossier</span>
+                            </button>
                         </td>
                         <td class="px-6 py-4">
                             <button type="button"
@@ -224,7 +289,31 @@
     </div>
 
     {# Mobile Card View #}
-    <div class="lg:hidden mt-4 space-y-3">
+    <div class="lg:hidden mt-4">
+        {# Mobile Sort Controls #}
+        <div class="mb-4 flex items-center gap-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+            <label for="mobile-sort" class="text-sm font-medium text-gray-700 dark:text-gray-300">Trier par:</label>
+            <select id="mobile-sort"
+                data-model="sortBy"
+                data-action="live#update"
+                class="flex-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2">
+                <option value="name" {{ sortBy == 'name' ? 'selected' : '' }}>Nom</option>
+                <option value="size" {{ sortBy == 'size' ? 'selected' : '' }}>Taille</option>
+                <option value="date" {{ sortBy == 'date' ? 'selected' : '' }}>Date</option>
+                <option value="type" {{ sortBy == 'type' ? 'selected' : '' }}>Type</option>
+            </select>
+            <button
+                type="button"
+                data-model="sortDirection"
+                data-value="{{ sortDirection == 'asc' ? 'desc' : 'asc' }}"
+                data-action="live#update"
+                class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                title="{{ sortDirection == 'asc' ? 'Tri croissant' : 'Tri décroissant' }}">
+                <twig:ux:icon name="fa6-solid:chevron-{{ sortDirection == 'asc' ? 'up' : 'down' }}" class="w-4 h-4" />
+            </button>
+        </div>
+
+        <div class="space-y-3">
         {% for file in this.files %}
             {% if this.parentDir == null %}
                 {% set parentDirectory = get_parent_dir(file.path) %}
@@ -329,5 +418,6 @@
                 </div>
             </div>
         {% endfor %}
+        </div>
     </div>
 </div>

@@ -15,6 +15,7 @@ class IconsExtension extends AbstractExtension
     {
         return [
             new TwigFunction('getIcons', [IconsExtensionRuntime::class, 'getIcons']),
+            new TwigFunction('getFileType', [IconsExtensionRuntime::class, 'getFileType']),
         ];
     }
 }
