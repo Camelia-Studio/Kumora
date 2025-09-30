@@ -3,7 +3,7 @@
 {% block body %}
     <div class="container mx-auto px-16 mt-4">
         <div class="block p-6 bg-white border border-gray-200 rounded-lg shadow-xs dark:bg-gray-800 dark:border-gray-700">
-            <h3 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Déplacer le {{ fileinfo.type }} {{ path }}</h3>
+            <h3 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Déplacer le {{ fileinfo.type == 'file' ? 'fichier' : 'dossier' }} {{ path }}</h3>
             {{ form_start(form) }}
             {{ form_row(form.path) }}
             <div class="flex gap-2">
@@ -18,6 +18,6 @@
 {% endblock %}
 
 {% block title %}
-    Modifier un {{ fileinfo.type }}
+    Déplacer le {{ fileinfo.type == 'file' ? 'fichier' : 'dossier' }} {{ path }}
 {% endblock %}
 

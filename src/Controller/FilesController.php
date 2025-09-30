@@ -527,10 +527,30 @@ class FilesController extends AbstractController
         }
 
         $newPath = [
-            'path' => '/' . $this->normalizePath(dirname($path)),
+            'path' => '',
         ];
 
-        $form = $this->createForm($formType, $newPath);
+        // Construire la liste des chemins à exclure
+        $excludePaths = [];
+
+        if ('directory' === $fileInfo['type']) {
+            // Exclure le dossier en cours de déplacement
+            $excludePaths[] = $path;
+        }
+
+        // Ajouter le dossier parent du fichier/dossier
+        $parentDir = $this->normalizePath(dirname($path));
+        if ('' !== $parentDir) {
+            $excludePaths[] = $parentDir;
+        }
+
+        // Construire l'URL d'autocomplétion avec les chemins à exclure
+        $autocompleteUrl = null;
+        if (count($excludePaths) > 0) {
+            $autocompleteUrl = '/kumora/autocomplete/path/file?exclude=' . urlencode(json_encode($excludePaths, JSON_UNESCAPED_SLASHES));
+        }
+
+        $form = $this->createForm($formType, $newPath, $autocompleteUrl ? ['autocomplete_url' => $autocompleteUrl] : []);
 
         $form->handleRequest($request);
 
@@ -552,14 +572,10 @@ class FilesController extends AbstractController
                     ]);
                 }
 
-                if ($this->filesystem->fileExists($newPath . '/' . basename($path))) {
-                    $form->addError(new FormError("Un fichier du même nom existe déjà !"));
-
-                    return $this->render('files/move.html.twig', [
-                        'form' => $form->createView(),
-                        'path' => $path,
-                        'fileinfo' => $fileInfo,
-                    ]);
+                // Vérifier si le fichier existe déjà et générer un nouveau nom si nécessaire
+                $finalPath = $newPath . '/' . basename($path);
+                if ($this->filesystem->fileExists($finalPath)) {
+                    $finalPath = $this->generateUniqueFilename($this->filesystem, $newPath, basename($path));
                 }
 
                 $name = explode('/', $newPath)[0];
@@ -587,25 +603,20 @@ class FilesController extends AbstractController
                     $this->entityManager->flush();
                 }
 
-                $this->filesystem->move($path, $newPath . '/' . basename($path));
+                $this->filesystem->move($path, $finalPath);
 
                 $this->actionLogger->logFileMove(
                     $path,
-                    $newPath . '/' . basename($path)
+                    $finalPath
                 );
             } else {
-                // Si le dossier existe déjà, on envoie une erreur
-                if ($this->filesystem->directoryExists($newPath . '/' . basename($path))) {
-                    $form->addError(new FormError("Un dossier du même nom existe déjà !"));
-
-                    return $this->render('files/move.html.twig', [
-                        'form' => $form->createView(),
-                        'path' => $path,
-                        'fileinfo' => $fileInfo,
-                    ]);
+                // Vérifier si le dossier existe déjà et générer un nouveau nom si nécessaire
+                $finalPath = $newPath . '/' . basename($path);
+                if ($this->filesystem->directoryExists($finalPath)) {
+                    $finalPath = $this->generateUniqueFilename($this->filesystem, $newPath, basename($path));
                 }
 
-                $name = explode('/', $this->normalizePath($newPath . '/' . basename($path)))[0];
+                $name = explode('/', $this->normalizePath($finalPath))[0];
                 $parentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => $name]);
 
                 if ($parentDirectory instanceof ParentDirectory && !$this->isGranted('file_write', $parentDirectory)) {
@@ -630,11 +641,11 @@ class FilesController extends AbstractController
                     $this->entityManager->flush();
                 }
 
-                $this->filesystem->move($path, $newPath . '/' . basename($path));
+                $this->filesystem->move($path, $finalPath);
 
                 $this->actionLogger->logFolderMove(
                     $path,
-                    $newPath . '/' . basename($path)
+                    $finalPath
                 );
 
                 if ($parentDir->getName() === $path) {
@@ -642,7 +653,7 @@ class FilesController extends AbstractController
                     $this->entityManager->flush();
                 }
 
-                $redirectPath = $this->normalizePath($newPath . '/' . basename($path));
+                $redirectPath = $this->normalizePath($finalPath);
             }
 
             return $this->redirectToRoute('app_files_index', [
@@ -730,7 +741,8 @@ class FilesController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function bulkMove(Request $request, Filesystem $defaultAdapter): Response
     {
-        if ($request->isMethod('POST')) {
+        // Distinguer la sélection initiale de la soumission du formulaire
+        if ($request->isMethod('POST') && $request->request->has('files') && !$request->request->has('move_file')) {
             $files = json_decode((string) $request->request->get('files', '[]'), true);
             $currentPath = $request->request->get('currentPath', '');
 
@@ -758,8 +770,21 @@ class FilesController extends AbstractController
             return $this->redirectToRoute('app_files_index');
         }
 
-        // Construire l'URL d'autocomplétion avec les fichiers à exclure
-        $autocompleteUrl = '/kumora/autocomplete/path/file?exclude=' . urlencode(json_encode($files));
+        // Construire la liste des chemins à exclure (fichiers/dossiers sélectionnés + leurs dossiers parents)
+        $excludePaths = [];
+        foreach ($files as $file) {
+            // Ajouter le fichier/dossier lui-même
+            $excludePaths[] = $file;
+
+            // Ajouter le dossier parent du fichier
+            $parentDir = $this->normalizePath(dirname((string) $file));
+            if ('' !== $parentDir && !in_array($parentDir, $excludePaths, true)) {
+                $excludePaths[] = $parentDir;
+            }
+        }
+
+        // Construire l'URL d'autocomplétion avec les chemins à exclure
+        $autocompleteUrl = '/kumora/autocomplete/path/file?exclude=' . urlencode(json_encode($excludePaths, JSON_UNESCAPED_SLASHES));
 
         $form = $this->createForm(MoveFileType::class, null, [
             'autocomplete_url' => $autocompleteUrl,
@@ -820,10 +845,18 @@ class FilesController extends AbstractController
                     $newPath = $destination . '/' . $fileName;
 
                     if ($defaultAdapter->fileExists($file)) {
+                        // Vérifier si le fichier existe déjà et générer un nouveau nom si nécessaire
+                        if ($defaultAdapter->fileExists($newPath)) {
+                            $newPath = $this->generateUniqueFilename($defaultAdapter, $destination, $fileName);
+                        }
                         $defaultAdapter->move($file, $newPath);
                         $this->actionLogger->logFileMove($file, $newPath);
                         ++$movedCount;
                     } elseif ($defaultAdapter->directoryExists($file)) {
+                        // Vérifier si le dossier existe déjà et générer un nouveau nom si nécessaire
+                        if ($defaultAdapter->directoryExists($newPath)) {
+                            $newPath = $this->generateUniqueFilename($defaultAdapter, $destination, $fileName);
+                        }
                         // Pour les dossiers, on doit les copier puis supprimer l'original
                         $this->copyDirectory($defaultAdapter, $file, $newPath);
                         $defaultAdapter->deleteDirectory($file);
@@ -847,7 +880,7 @@ class FilesController extends AbstractController
                 $this->addFlash('error', 'Erreurs: ' . implode(', ', $errors));
             }
 
-            return $this->redirectToRoute('app_files_index', ['path' => $sourcePath]);
+            return $this->redirectToRoute('app_files_index', ['path' => $destination]);
         }
 
         return $this->render('files/bulk_move.html.twig', [
@@ -875,5 +908,23 @@ class FilesController extends AbstractController
                 $filesystem->createDirectory($newPath);
             }
         }
+    }
+
+    /**
+     * Génère un nom de fichier unique en ajoutant un suffixe si nécessaire.
+     */
+    private function generateUniqueFilename(Filesystem $filesystem, string $directory, string $filename): string
+    {
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        $nameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
+        $counter = 1;
+
+        do {
+            $newFilename = $nameWithoutExt . '_' . $counter . ('' === $extension ? '' : '.' . $extension);
+            $newPath = $directory . '/' . $newFilename;
+            ++$counter;
+        } while ($filesystem->fileExists($newPath) || $filesystem->directoryExists($newPath));
+
+        return $newPath;
     }
 }
