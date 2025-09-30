@@ -37,6 +37,9 @@ final class FileTable
     #[LiveProp(writable: true, onUpdated: 'getFiles', url: true)]
     public string $sortDirection = 'asc';
 
+    #[LiveProp(writable: true, onUpdated: 'getFiles', url: true)]
+    public string $search = '';
+
     public ?ParentDirectory $parentDir = null;
 
     /**
@@ -96,8 +99,14 @@ final class FileTable
                     'previewUrl' => 'file' === $file['type']
                         ? $this->urlGenerator->generate('app_files_proxy', ['filename' => $file['path'], 'preview' => true], UrlGeneratorInterface::ABSOLUTE_URL)
                         : $this->urlGenerator->generate('app_files_index', ['path' => $file['path']]),
+                    'relativePath' => $this->getRelativePath($file['path']),
                 ];
             }
+        }
+
+        // Filtrer par recherche si une recherche est active
+        if ('' !== $this->search) {
+            $realFiles = $this->searchFiles($realFiles);
         }
 
         // Tri des fichiers selon les critères sélectionnés
@@ -203,6 +212,98 @@ final class FileTable
             'html', 'htm', 'css', 'js', 'json', 'xml', 'yaml', 'yml', 'php', 'py', 'java', 'c', 'cpp', 'cs', 'rb', 'go', 'rs' => 'code',
             default => 'other',
         };
+    }
+
+    /**
+     * @param array<int, array{type: string, path: string, last_modified: int, size: int, url: string, previewUrl: string}> $files
+     *
+     * @throws FilesystemException
+     *
+     * @return array<int, array{type: string, path: string, last_modified: int, size: int, url: string, previewUrl: string}>
+     */
+    private function searchFiles(array $files): array
+    {
+        $searchTerm = mb_strtolower($this->search);
+        $matchedFiles = [];
+
+        foreach ($files as $file) {
+            // Rechercher dans le nom du fichier/dossier
+            $filename = basename((string) $file['path']);
+            if (str_contains(mb_strtolower($filename), $searchTerm)) {
+                $matchedFiles[] = $file;
+                continue;
+            }
+
+            // Si c'est un dossier, rechercher dans son contenu
+            if ('dir' === $file['type']) {
+                $subFiles = $this->searchInDirectory($file['path'], $searchTerm);
+                $matchedFiles = array_merge($matchedFiles, $subFiles);
+            }
+        }
+
+        return $matchedFiles;
+    }
+
+    /**
+     * @throws FilesystemException
+     *
+     * @return array<int, array{type: string, path: string, last_modified: int, size: int, url: string, previewUrl: string}>
+     */
+    private function searchInDirectory(string $directory, string $searchTerm): array
+    {
+        $matchedFiles = [];
+        $files = $this->defaultAdapter->listContents('/' . $directory, true);
+
+        foreach ($files as $file) {
+            $filename = basename((string) $file['path']);
+
+            // Ignorer les fichiers cachés
+            if (str_starts_with($filename, '.')) {
+                continue;
+            }
+
+            // Vérifier les permissions
+            $pathFile = explode('/', (string) $file['path']);
+            $parentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => $pathFile[0]]);
+
+            if (null === $parentDirectory || !$this->security->isGranted('file_read', $parentDirectory)) {
+                continue;
+            }
+
+            // Vérifier si le nom correspond
+            if (str_contains(mb_strtolower($filename), $searchTerm)) {
+                $matchedFiles[] = [
+                    'type' => $file['type'],
+                    'path' => $file['path'],
+                    'last_modified' => $file['lastModified'],
+                    'size' => $file['fileSize'] ?? ('dir' === $file['type'] ? $this->calculateSize($file) : 0),
+                    'url' => 'file' === $file['type']
+                        ? $this->urlGenerator->generate('app_files_proxy', ['filename' => $file['path'], 'preview' => false], UrlGeneratorInterface::ABSOLUTE_URL)
+                        : $this->urlGenerator->generate('app_files_index', ['path' => $file['path']]),
+                    'previewUrl' => 'file' === $file['type']
+                        ? $this->urlGenerator->generate('app_files_proxy', ['filename' => $file['path'], 'preview' => true], UrlGeneratorInterface::ABSOLUTE_URL)
+                        : $this->urlGenerator->generate('app_files_index', ['path' => $file['path']]),
+                    'relativePath' => $this->getRelativePath($file['path']),
+                ];
+            }
+        }
+
+        return $matchedFiles;
+    }
+
+    private function getRelativePath(string $fullPath): string
+    {
+        if ('' === $this->path) {
+            return $fullPath;
+        }
+
+        // Retirer le chemin de base pour obtenir le chemin relatif
+        $basePath = rtrim($this->path, '/') . '/';
+        if (str_starts_with($fullPath, $basePath)) {
+            return substr($fullPath, strlen($basePath));
+        }
+
+        return $fullPath;
     }
 
     #[LiveAction]

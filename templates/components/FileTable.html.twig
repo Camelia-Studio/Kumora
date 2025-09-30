@@ -1,22 +1,51 @@
 <div{{ attributes }}>
-    {% if this.parentDir == null or (this.parentDir != null and is_granted('file_write', this.parentDir)) %}
-        <div class="flex flex-col lg:flex-row lg:justify-end gap-2">
-            <a href="{{ path('app_files_create_directory', {
-                base: path
-            }) }}" class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 rounded-lg dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors w-full lg:w-auto">
-                <twig:ux:icon name="fa6-solid:folder-plus" class="w-4 h-4 mr-2" />
-                Créer un dossier
-            </a>
-            {% if path != '' %}
-                <a href="{{ path('app_files_upload', {
-                    path: path
-                }) }}" class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 rounded-lg dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors w-full lg:w-auto">
-                    <twig:ux:icon name="fa6-solid:upload" class="w-4 h-4 mr-2" />
-                    Ajouter des fichiers
-                </a>
+    <div class="flex flex-col gap-4">
+        {# Search bar #}
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <twig:ux:icon name="fa6-solid:magnifying-glass" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            </div>
+            <input
+                type="text"
+                data-model="search"
+                data-action="live#update"
+                value="{{ search }}"
+                placeholder="Rechercher un fichier ou dossier..."
+                class="block w-full py-2.5 pl-10 pr-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            />
+            {% if search != '' %}
+                <button
+                    type="button"
+                    data-model="search"
+                    data-value=""
+                    data-action="live#update"
+                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    title="Effacer la recherche">
+                    <twig:ux:icon name="fa6-solid:xmark" class="w-5 h-5" />
+                </button>
             {% endif %}
         </div>
-    {% endif %}
+
+        {# Action buttons #}
+        {% if this.parentDir == null or (this.parentDir != null and is_granted('file_write', this.parentDir)) %}
+            <div class="flex flex-col lg:flex-row lg:justify-end gap-2">
+                <a href="{{ path('app_files_create_directory', {
+                    base: path
+                }) }}" class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 rounded-lg dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors w-full lg:w-auto">
+                    <twig:ux:icon name="fa6-solid:folder-plus" class="w-4 h-4 mr-2" />
+                    Créer un dossier
+                </a>
+                {% if path != '' %}
+                    <a href="{{ path('app_files_upload', {
+                        path: path
+                    }) }}" class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 rounded-lg dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors w-full lg:w-auto">
+                        <twig:ux:icon name="fa6-solid:upload" class="w-4 h-4 mr-2" />
+                        Ajouter des fichiers
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
     <div class="mt-4">
         {% if path != '' %}
             <div class="mb-4">
@@ -119,13 +148,18 @@
                 {% endif %}
                 <tr class="{{ parentDirectory.public ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900' }} border-b dark:border-gray-700 group">
                     {% if file.type == 'file' %}
-                        <td class="px-6 py-4 font-medium light:text-gray-900 whitespace-nowrap cursor-pointer">
-                            <button onclick="openPreviewModal('{{ file.path|basename }}', '{{ file.previewUrl }}', '{{ file.url }}')" class="flex gap-2 items-center w-full h-full duration-300 group-[:hover:not(:has(.links-total:hover))]:text-blue-900  dark:group-[:hover:not(:has(.links-total:hover))]:text-blue-700 text-left">
+                        <td class="px-6 py-4 font-medium light:text-gray-900 cursor-pointer">
+                            <button onclick="openPreviewModal('{{ file.path|basename }}', '{{ file.previewUrl }}', '{{ file.url }}')" class="flex gap-2 items-center w-full h-full duration-300 group-[:hover:not(:has(.links-total:hover))]:text-blue-900  dark:group-[:hover:not(:has(.links-total:hover))]:text-blue-700 text-left cursor-pointer">
                                 {% if not parentDirectory.public %}
                                     <twig:ux:icon name="fa6-solid:lock" class="w-4 h-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
                                 {% endif %}
-                                <twig:ux:icon name="{{ getIcons(file.path|basename) }}" class="w-6 h-6" />
-                                {{ file.path|basename }}
+                                <twig:ux:icon name="{{ getIcons(file.path|basename) }}" class="w-6 h-6 flex-shrink-0" />
+                                <div class="flex flex-col">
+                                    <span>{{ file.path|basename }}</span>
+                                    {% if search != '' and file.relativePath != file.path|basename %}
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ file.relativePath }}</span>
+                                    {% endif %}
+                                </div>
                             </button>
                         </td>
                         <td class="px-6 py-4">
@@ -167,7 +201,7 @@
                             </a>
                         </td>
                     {% else %}
-                        <td class="px-6 py-4 font-medium light:text-gray-900 whitespace-nowrap cursor-pointer">
+                        <td class="px-6 py-4 font-medium light:text-gray-900 cursor-pointer">
                             <button
                                     type="button"
                                     data-model="path"
@@ -177,8 +211,13 @@
                                 {% if not parentDirectory.public %}
                                     <twig:ux:icon name="fa6-solid:lock" class="w-4 h-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
                                 {% endif %}
-                                <twig:ux:icon name="line-md:folder-filled" class="w-6 h-6" />
-                                {{ file.path|basename }}
+                                <twig:ux:icon name="line-md:folder-filled" class="w-6 h-6 flex-shrink-0" />
+                                <div class="flex flex-col">
+                                    <span>{{ file.path|basename }}</span>
+                                    {% if search != '' and file.relativePath != file.path|basename %}
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ file.relativePath }}</span>
+                                    {% endif %}
+                                </div>
                             </button>
                         </td>
                         <td class="px-6 py-4">
@@ -331,6 +370,9 @@
                         <twig:ux:icon name="{{ getIcons(file.path|basename) }}" class="w-8 h-8 flex-shrink-0" />
                         <div class="flex-1 min-w-0">
                             <h3 class="font-medium text-gray-900 dark:text-white truncate">{{ file.path|basename }}</h3>
+                            {% if search != '' and file.relativePath != file.path|basename %}
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ file.relativePath }}</p>
+                            {% endif %}
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ file.size|show_size }} • {{ file.last_modified|time_diff }}</p>
                         </div>
                     {% else %}
@@ -347,6 +389,9 @@
                                 class="font-medium text-gray-900 dark:text-white truncate text-left w-full">
                                 {{ file.path|basename }}
                             </button>
+                            {% if search != '' and file.relativePath != file.path|basename %}
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ file.relativePath }}</p>
+                            {% endif %}
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ file.size|show_size }} • {{ file.last_modified|time_diff }}</p>
                         </div>
                     {% endif %}

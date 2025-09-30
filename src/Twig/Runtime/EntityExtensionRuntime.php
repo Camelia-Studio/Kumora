@@ -15,8 +15,12 @@ class EntityExtensionRuntime implements RuntimeExtensionInterface
     ) {
     }
 
-    public function getParentDir(string $value): ParentDirectory
+    public function getParentDir(string $value): ?ParentDirectory
     {
-        return $this->parentDirectoryRepository->findOneBy(['name' => $value]);
+        // Extraire le premier segment du chemin (le nom du ParentDirectory)
+        $pathParts = explode('/', $value);
+        $parentDirName = $pathParts[0];
+
+        return $this->parentDirectoryRepository->findOneBy(['name' => $parentDirName]);
     }
 }
