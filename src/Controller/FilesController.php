@@ -247,7 +247,10 @@ class FilesController extends AbstractController
                 throw $this->createNotFoundException("Vous n'avez pas le droit de créer de sous-dossier dans ce dossier !");
             }
         }
-        $form = $this->createForm(CreateDirectoryType::class);
+        $isRootDirectory = '' === $basePath;
+        $form = $this->createForm(CreateDirectoryType::class, null, [
+            'is_root_directory' => $isRootDirectory,
+        ]);
 
         $form->handleRequest($request);
 
@@ -277,16 +280,30 @@ class FilesController extends AbstractController
             $this->actionLogger->logFolderCreate($folderPath);
 
             // si basePath est vide, on crée un parentDirectory
-            if ('' === $basePath) {
+            if ($isRootDirectory) {
                 /**
                  * @var User $user
                  */
                 $user = $this->getUser();
                 $parentDirectory = new ParentDirectory();
                 $parentDirectory->setName($name);
-                $parentDirectory->setOwnerRole($user->getAccessGroup());
-                $parentDirectory->setIsPublic(false);
                 $parentDirectory->setUserCreated($user);
+
+                // Récupérer les données du formulaire pour les permissions
+                $ownerRole = $form->get('ownerRole')->getData();
+                $typeDossier = $form->get('typeDossier')->getData();
+                $permissions = $form->get('parentDirectoryPermissions')->getData();
+
+                $parentDirectory->setOwnerRole($ownerRole ?? $user->getAccessGroup());
+                $parentDirectory->setIsPublic('shared' === $typeDossier);
+
+                // Ajouter les permissions supplémentaires
+                if (is_iterable($permissions)) {
+                    foreach ($permissions as $permission) {
+                        $permission->setParentDirectory($parentDirectory);
+                        $parentDirectory->addParentDirectoryPermission($permission);
+                    }
+                }
 
                 $this->entityManager->persist($parentDirectory);
                 $this->entityManager->flush();
@@ -302,6 +319,7 @@ class FilesController extends AbstractController
         return $this->render('files/create_directory.html.twig', [
             'form' => $form->createView(),
             'basePath' => $basePath,
+            'isRootDirectory' => $isRootDirectory,
         ]);
     }
     /**

@@ -3,10 +3,34 @@
 {% block body %}
     <div class="container mx-auto px-4 md:px-8 lg:px-16 mt-4">
         <div class="block p-6 bg-white border border-gray-200 rounded-lg shadow-xs dark:bg-gray-800 dark:border-gray-700">
-            <h3 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Créer un dossier dans /{{ basePath }}</h3>
+            <h3 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Créer un dossier{% if basePath != '' %} dans /{{ basePath }}{% endif %}</h3>
             {{ form_start(form) }}
             {{ form_row(form.name) }}
-            <div class="flex gap-2">
+
+            {% if isRootDirectory %}
+                <div data-controller="directory-permissions" data-directory-permissions-lowest-role-id-value="{{ getLowestRole().id }}">
+                    {{ form_row(form.typeDossier, {
+                        'attr': {
+                            'data-action': 'change->directory-permissions#togglePermissions'
+                        }
+                    }) }}
+                    <div class="hidden" data-directory-permissions-target="showBlock">
+                        {{ form_row(form.ownerRole) }}
+                        {{ form_label(form.parentDirectoryPermissions) }}
+                        <div data-directory-permissions-target="permissionsContainer" data-prototype="{{ form_widget(form.parentDirectoryPermissions.vars.prototype)|e('html_attr') }}">
+                            {{ form_widget(form.parentDirectoryPermissions) }}
+                        </div>
+                        <button
+                            type="button"
+                            data-action="directory-permissions#addPermission"
+                            class="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-hidden bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
+                            Ajouter une permission
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="flex gap-2 mt-4">
                 {{ form_widget(form.submit) }}
                 <a href="{{ path('app_files_index', {
                     path: basePath,

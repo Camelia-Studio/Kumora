@@ -33,7 +33,7 @@ class ParentDirectory
     /**
      * @var Collection<int, ParentDirectoryPermission>
      */
-    #[ORM\OneToMany(targetEntity: ParentDirectoryPermission::class, mappedBy: 'parentDirectory', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: ParentDirectoryPermission::class, mappedBy: 'parentDirectory', orphanRemoval: true, cascade: ['persist'])]
     private Collection $parentDirectoryPermissions;
 
     public function __construct()
