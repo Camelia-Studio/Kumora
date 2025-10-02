@@ -12,12 +12,18 @@
                         Déplacer
                     </button>
                 </form>
-                <form method="post" action="{{ path('app_files_bulk_delete') }}" class="inline" id="bulkDeleteForm">
+                <form
+                    method="post"
+                    action="{{ path('app_files_bulk_delete') }}"
+                    class="inline"
+                    id="bulkDeleteForm"
+                    data-controller="bulk-delete"
+                    data-bulk-delete-files-value="{{ selectedFiles|json_encode|e('html_attr') }}">
                     <input type="hidden" name="files" value="{{ selectedFiles|json_encode }}">
                     <input type="hidden" name="currentPath" value="{{ path }}">
                     <button
                         type="button"
-                        onclick="customConfirm('Voulez-vous vraiment supprimer ces ' + {{ selectedFiles|length }} + ' élément(s) ?', 'Suppression en masse').then(confirmed => { if (confirmed) { document.getElementById('bulkDeleteForm').submit(); } })"
+                        data-action="bulk-delete#confirmDelete"
                         class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
                         <twig:ux:icon name="fa6-solid:trash-can" class="w-4 h-4 mr-1.5" />
                         Supprimer

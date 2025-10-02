@@ -40,7 +40,8 @@ export default class extends Controller {
 
     show(title, message, options = {}) {
         this.titleTarget.textContent = title
-        this.messageTarget.textContent = message
+        // Utiliser innerHTML pour supporter le HTML dans le message
+        this.messageTarget.innerHTML = message
 
         // Pour les modales de notification, gérer les différents types d'icônes
         if (this.typeValue === 'notification' && this.hasIconTarget) {

@@ -714,6 +714,18 @@ class FilesController extends AbstractController
                     $this->actionLogger->logFileDelete($file);
                     ++$deletedCount;
                 } elseif ($defaultAdapter->directoryExists($file)) {
+                    // Vérifier si c'est un ParentDirectory (dossier à la racine)
+                    $isRootDirectory = !str_contains($file, '/');
+
+                    if ($isRootDirectory) {
+                        // Supprimer le ParentDirectory de la base de données
+                        $parentDirEntity = $this->parentDirectoryRepository->findOneBy(['name' => $file]);
+                        if (null !== $parentDirEntity) {
+                            $this->entityManager->remove($parentDirEntity);
+                            $this->entityManager->flush();
+                        }
+                    }
+
                     $defaultAdapter->deleteDirectory($file);
                     $this->actionLogger->logFolderDelete($file);
                     ++$deletedCount;
