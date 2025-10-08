@@ -1,4 +1,4 @@
-<div{{ attributes }}>
+<div{{ attributes }} data-current-path="{{ path }}">
     {# Bulk actions toolbar #}
     {% if selectedFiles|length > 0 %}
         <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-600 dark:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-4">
@@ -76,14 +76,6 @@
                     <twig:ux:icon name="fa6-solid:folder-plus" class="w-4 h-4 mr-2" />
                     Créer un dossier
                 </a>
-                {% if path != '' %}
-                    <a href="{{ path('app_files_upload', {
-                        path: path
-                    }) }}" class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 rounded-lg dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors w-full lg:w-auto">
-                        <twig:ux:icon name="fa6-solid:upload" class="w-4 h-4 mr-2" />
-                        Ajouter des fichiers
-                    </a>
-                {% endif %}
             </div>
         {% endif %}
     </div>
@@ -222,7 +214,13 @@
                             </button>
                         </td>
                         <td class="px-6 py-4">
-                            <a href="{{ file.previewUrl }}" target="_blank" class="w-full h-full block">{{ file.size|show_size }}</a>
+                            {% if file.type == 'dir' and file.size < 0 %}
+                                <span data-controller="folder-size"
+                                      data-folder-size-path-value="{{ file.path }}"
+                                      data-folder-size-calculate-url-value="{{ path('app_files_calculate_size') }}">-</span>
+                            {% else %}
+                                <a href="{{ file.previewUrl }}" target="_blank" class="w-full h-full block">{{ file.size|show_size }}</a>
+                            {% endif %}
                         </td>
                         <td class="px-6 py-4">
                             <a href="{{ file.previewUrl }}" target="_blank" class="w-full h-full block">{{ file.last_modified|time_diff }}</a>
@@ -280,10 +278,21 @@
                             </button>
                         </td>
                         <td class="px-6 py-4">
-                            <button type="button"
-                                    data-model="path"
-                                    data-value="{{ file.path }}"
-                                    data-action="live#update" class="text-left h-full w-full cursor-pointer">{{ file.size|show_size }}</button>
+                            {% if file.type == 'dir' and file.size < 0 %}
+                                <button type="button"
+                                        data-model="path"
+                                        data-value="{{ file.path }}"
+                                        data-action="live#update" class="text-left h-full w-full cursor-pointer">
+                                    <span data-controller="folder-size"
+                                          data-folder-size-path-value="{{ file.path }}"
+                                          data-folder-size-calculate-url-value="{{ path('app_files_calculate_size') }}">-</span>
+                                </button>
+                            {% else %}
+                                <button type="button"
+                                        data-model="path"
+                                        data-value="{{ file.path }}"
+                                        data-action="live#update" class="text-left h-full w-full cursor-pointer">{{ file.size|show_size }}</button>
+                            {% endif %}
                         </td>
                         <td class="px-6 py-4">
                             <button type="button"
@@ -438,7 +447,9 @@
                             {% if search != '' and file.relativePath != file.path|basename %}
                                 <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ file.relativePath }}</p>
                             {% endif %}
-                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ file.size|show_size }} • {{ file.last_modified|time_diff }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                {{ file.size|show_size }} • {{ file.last_modified|time_diff }}
+                            </p>
                         </div>
                     {% else %}
                         {% if not parentDirectory.public %}
@@ -457,7 +468,16 @@
                             {% if search != '' and file.relativePath != file.path|basename %}
                                 <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ file.relativePath }}</p>
                             {% endif %}
-                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ file.size|show_size }} • {{ file.last_modified|time_diff }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                {% if file.type == 'dir' and file.size < 0 %}
+                                    <span data-controller="folder-size"
+                                          data-folder-size-path-value="{{ file.path }}"
+                                          data-folder-size-calculate-url-value="{{ path('app_files_calculate_size') }}">-</span>
+                                {% else %}
+                                    {{ file.size|show_size }}
+                                {% endif %}
+                                • {{ file.last_modified|time_diff }}
+                            </p>
                         </div>
                     {% endif %}
                 </div>

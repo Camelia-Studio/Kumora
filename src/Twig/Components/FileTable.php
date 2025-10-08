@@ -143,17 +143,9 @@ final class FileTable
      */
     private function calculateSize($file): int
     {
-        $folderPath = $file['path'];
-        // On récupère tout les fichiers dans le dossier
-        $files = $this->defaultAdapter->listContents($folderPath, true);
-
-        $size = 0;
-
-        foreach ($files as $fil) {
-            $size += $fil['fileSize'] ?? 0;
-        }
-
-        return $size;
+        // Ne pas calculer la taille pour les performances
+        // La taille sera calculée à la demande via AJAX si nécessaire
+        return -1; // -1 indique que la taille n'est pas calculée
     }
 
     private function sortFiles(array &$files): void

@@ -15,6 +15,11 @@ class SizeExtensionRuntime implements RuntimeExtensionInterface
 
     public function showSize($value)
     {
+        // Si la taille n'a pas été calculée (performance), afficher "-"
+        if ($value < 0) {
+            return '-';
+        }
+
         $bytes = $value;
         $size = ['B', 'KB', 'MB', 'GB','TB'];
         $factor = floor((strlen((string) $bytes) - 1) / 3);

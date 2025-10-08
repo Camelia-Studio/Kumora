@@ -11,7 +11,6 @@ use App\Form\FilePermissionType;
 use App\Form\MoveFileType;
 use App\Form\MoveType;
 use App\Form\RenameType;
-use App\Form\UploadType;
 use App\Repository\AccessGroupRepository;
 use App\Repository\ParentDirectoryRepository;
 use App\Service\UserActionLogger;
@@ -388,61 +387,121 @@ class FilesController extends AbstractController
     /**
      * @throws FilesystemException
      */
-    #[Route('/files/upload', name: 'app_files_upload')]
+    #[Route('/files/calculate-size', name: 'app_files_calculate_size', methods: ['GET'])]
     #[IsGranted('ROLE_USER')]
-    public function upload(#[MapQueryParameter('path')] string $path, Request $request, Filesystem $defaultAdapter): Response
+    public function calculateSize(#[MapQueryParameter('path')] string $path, Filesystem $defaultAdapter): Response
     {
         $path = $this->normalizePath($path);
 
-        $this->getUser();
+        // Vérifier les permissions
+        if ('' !== $path) {
+            $realPath = explode('/', $path);
+            $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
+
+            if (null === $parentDir || !$this->isGranted('file_read', $parentDir)) {
+                return $this->json(['error' => 'Accès interdit'], 403);
+            }
+        }
+
+        if (!$defaultAdapter->directoryExists($path)) {
+            return $this->json(['error' => 'Le dossier n\'existe pas'], 404);
+        }
+
+        // Calculer la taille du dossier
+        $files = $defaultAdapter->listContents($path, true);
+        $size = 0;
+
+        foreach ($files as $file) {
+            if ('file' === $file['type']) {
+                $size += $file['fileSize'] ?? 0;
+            }
+        }
+
+        return $this->json([
+            'success' => true,
+            'size' => $size,
+            'path' => $path,
+        ]);
+    }
+
+    /**
+     * @throws FilesystemException
+     */
+    #[Route('/files/upload-ajax', name: 'app_files_upload_ajax', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function uploadAjax(#[MapQueryParameter('path')] string $path, Request $request, Filesystem $defaultAdapter): Response
+    {
+        $path = $this->normalizePath($path);
 
         if ('' === $path) {
-            throw $this->createNotFoundException("Vous ne pouvez pas téléverser de fichier à la racine !");
+            return $this->json(['error' => 'Vous ne pouvez pas téléverser de fichier à la racine !'], 400);
         }
 
         $realPath = explode('/', $path);
         $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $realPath[0]]);
 
         if (null === $parentDir || !$this->isGranted('file_write', $parentDir)) {
-            throw $this->createNotFoundException("Vous n'avez pas le droit de téléverser des fichiers dans ce dossier !");
+            return $this->json(['error' => 'Vous n\'avez pas le droit de téléverser des fichiers dans ce dossier !'], 403);
         }
-
-        $form = $this->createForm(UploadType::class);
 
         if (!$defaultAdapter->directoryExists($path)) {
-            throw $this->createNotFoundException("Ce dossier n'existe pas !");
+            return $this->json(['error' => 'Ce dossier n\'existe pas !'], 404);
         }
 
-        $form->handleRequest($request);
+        $files = $request->files->get('upload')['files'] ?? [];
+        $uploadData = $request->request->all('upload');
+        $paths = $uploadData['paths'] ?? [];
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $data = $form->getData();
-            $files = $data['files'];
+        if (empty($files)) {
+            return $this->json(['error' => 'Aucun fichier reçu'], 400);
+        }
 
-            /**
-             * @var UploadedFile $file
-             */
-            foreach ($files as $file) {
-                $filename = $file->getClientOriginalName();
-                $file->move($this->projectDir . '/uploads/' . $path, $filename);
+        $uploadedCount = 0;
+        foreach ($files as $index => $file) {
+            if ($file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) {
+                // Récupérer le chemin relatif du fichier (peut inclure des sous-dossiers)
+                $relativePath = $paths[$index] ?? $file->getClientOriginalName();
+
+                // Extraire le dossier et le nom du fichier
+                $dirname = dirname($relativePath);
+                $filename = basename($relativePath);
+
+                // Construire le chemin de destination
+                $targetDir = $path;
+                if ('.' !== $dirname && '' !== $dirname) {
+                    $targetDir = $path . '/' . $dirname;
+
+                    // Créer les sous-dossiers si nécessaire
+                    if (!$defaultAdapter->directoryExists($targetDir)) {
+                        $defaultAdapter->createDirectory($targetDir);
+                    }
+                }
+
+                $filePath = $targetDir . '/' . $filename;
+
+                // Vérifier si le fichier existe déjà et générer un nom unique si nécessaire
+                if ($defaultAdapter->fileExists($filePath)) {
+                    $uniquePath = $this->generateUniqueFilename($defaultAdapter, $targetDir, $filename);
+                    // Extraire juste le nom du fichier du chemin complet
+                    $filename = basename($uniquePath);
+                    $filePath = $uniquePath;
+                }
+
+                $file->move($this->projectDir . '/uploads/' . $targetDir, $filename);
 
                 // Log de l'action d'upload
-                $filePath = $path . '/' . $filename;
                 $this->actionLogger->logFileUpload($filePath, $file);
+                ++$uploadedCount;
             }
-
-            $this->addFlash('success', 'Les ' . count($files) . ' fichiers ont bien été envoyés.');
-
-            return $this->redirectToRoute('app_files_index', [
-                'path' => $path,
-            ]);
         }
 
-        return $this->render('files/upload.html.twig', [
-            'form' => $form->createView(),
-            'path' => $path,
+        return $this->json([
+            'success' => true,
+            'message' => sprintf('%d fichier(s) uploadé(s) avec succès', $uploadedCount),
+            'count' => $uploadedCount,
         ]);
     }
+
     private function normalizePath(string $path): string
     {
         // On retire les slashs en début et fin de chaîne
