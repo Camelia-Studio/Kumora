@@ -98,7 +98,7 @@ final class FileTable
                     'type' => $file['type'],
                     'path' => $file['path'],
                     'last_modified' => $file['lastModified'],
-                    'size' => $file['fileSize'] ?? $this->calculateSize($file),
+                    'size' => $file['fileSize'] ?? $this->calculateSize(),
                     'url' => 'file' === $file['type']
                         ? $this->urlGenerator->generate('app_files_proxy', ['filename' => $file['path'], 'preview' => false], UrlGeneratorInterface::ABSOLUTE_URL)
                         : $this->urlGenerator->generate('app_files_index', ['path' => $file['path']]),
@@ -138,22 +138,12 @@ final class FileTable
         return str_replace('//', '/', $path);
     }
 
-    /**
-     * @throws FilesystemException
-     */
-    private function calculateSize($file): int
+    private function calculateSize(): int
     {
-        $folderPath = $file['path'];
-        // On récupère tout les fichiers dans le dossier
-        $files = $this->defaultAdapter->listContents($folderPath, true);
-
-        $size = 0;
-
-        foreach ($files as $fil) {
-            $size += $fil['fileSize'] ?? 0;
-        }
-
-        return $size;
+        // Ne pas calculer la taille pour les performances
+        // La taille sera calculée à la demande via AJAX si nécessaire
+        return -1;
+        // -1 indique que la taille n'est pas calculée
     }
 
     private function sortFiles(array &$files): void
@@ -282,7 +272,7 @@ final class FileTable
                     'type' => $file['type'],
                     'path' => $file['path'],
                     'last_modified' => $file['lastModified'],
-                    'size' => $file['fileSize'] ?? ('dir' === $file['type'] ? $this->calculateSize($file) : 0),
+                    'size' => $file['fileSize'] ?? ('dir' === $file['type'] ? $this->calculateSize() : 0),
                     'url' => 'file' === $file['type']
                         ? $this->urlGenerator->generate('app_files_proxy', ['filename' => $file['path'], 'preview' => false], UrlGeneratorInterface::ABSOLUTE_URL)
                         : $this->urlGenerator->generate('app_files_index', ['path' => $file['path']]),
