@@ -13,77 +13,53 @@ export default class extends Controller {
         // Compteur pour suivre les dragenter/dragleave
         this.dragCounter = 0
 
-        // Sauvegarder le path actuel
-        this.lastPath = this.getCurrentPath()
+        // Sauvegarder le path actuel depuis l'URL
+        this.lastPath = this.getPathFromUrl()
+        console.log('Initial path from URL:', this.lastPath)
 
         // Initialiser les event listeners
         this.setupEventListeners()
 
-        // Écouter les événements LiveComponent pour détecter les changements
-        this.boundHandleLiveUpdate = this.handleLiveUpdate.bind(this)
-
-        // Trouver l'élément LiveComponent dans le dropzone
-        const liveElement = this.dropzoneTarget.querySelector('[data-controller*="live"]')
-        console.log('Found live element:', liveElement)
-
-        if (liveElement) {
-            // Écouter les événements directement sur l'élément LiveComponent
-            const liveEvents = ['live:update-finish', 'live:render-finished', 'live:render', 'live:connect']
-            liveEvents.forEach(eventName => {
-                console.log('Listening to event on element:', eventName)
-                liveElement.addEventListener(eventName, this.boundHandleLiveUpdate)
-            })
-
-            // Sauvegarder l'élément pour le cleanup
-            this.liveElement = liveElement
-        } else {
-            console.warn('No live element found, falling back to polling')
-            // Fallback: vérifier périodiquement si le path a changé
+        // Écouter les changements d'URL (beaucoup plus fiable)
+        // Attendre un peu avant de démarrer le polling pour éviter les faux positifs au chargement
+        console.log('Setting up URL monitoring via polling')
+        setTimeout(() => {
             this.pollingInterval = setInterval(() => {
-                const currentPath = this.getCurrentPath()
+                const currentPath = this.getPathFromUrl()
                 if (currentPath !== this.lastPath) {
-                    console.log('Polling detected path change from', this.lastPath, 'to', currentPath)
+                    console.log('URL change detected: path changed from', this.lastPath, 'to', currentPath)
                     this.handlePathChange(currentPath)
                 }
-            }, 500)
-        }
+            }, 200) // Vérifier toutes les 200ms
+        }, 500) // Attendre 500ms avant de démarrer le polling
     }
 
-    handleLiveUpdate(event) {
-        console.log('LiveComponent event triggered:', event.type)
+    handlePathChange(newPath) {
+        console.log('Path changed from', this.lastPath, 'to', newPath)
+        this.lastPath = newPath
 
-        // Petite pause pour s'assurer que le DOM est à jour
-        setTimeout(() => {
-            const currentPath = this.getCurrentPath()
-            console.log('Current path after update:', currentPath)
-            console.log('Last path:', this.lastPath)
+        // Nettoyer les anciens listeners
+        this.removeEventListeners()
 
-            // Vérifier si le path a changé
-            if (currentPath !== this.lastPath) {
-                console.log('Path changed from', this.lastPath, 'to', currentPath)
-                this.lastPath = currentPath
+        // Réinitialiser le drag counter et masquer l'overlay
+        this.dragCounter = 0
+        if (this.hasOverlayTarget) {
+            this.overlayTarget.classList.add('hidden')
+        }
 
-                // Nettoyer les anciens listeners
-                this.removeEventListeners()
+        // Reconfigurer les listeners
+        this.setupEventListeners()
+    }
 
-                // Réinitialiser le drag counter et masquer l'overlay
-                this.dragCounter = 0
-                if (this.hasOverlayTarget) {
-                    this.overlayTarget.classList.add('hidden')
-                }
-
-                // Reconfigurer les listeners
-                this.setupEventListeners()
-            } else {
-                console.log('Path unchanged, skipping reconfiguration')
-            }
-        }, 10)
+    getPathFromUrl() {
+        // Récupérer le path depuis les query params de l'URL
+        const urlParams = new URLSearchParams(window.location.search)
+        return urlParams.get('path') || ''
     }
 
     getCurrentPath() {
-        // Chercher l'élément avec data-current-path dans le dropzone
-        const fileTable = this.dropzoneTarget.querySelector('[data-current-path]')
-        return fileTable ? fileTable.dataset.currentPath : ''
+        // Utiliser getPathFromUrl comme source de vérité
+        return this.getPathFromUrl()
     }
 
     getUploadUrl() {
@@ -143,19 +119,30 @@ export default class extends Controller {
     }
 
     removeEventListeners() {
-        if (!this.boundPreventDefaults) {
+        console.log('Attempting to remove event listeners', {
+            hasPreventDefaults: !!this.boundPreventDefaults,
+            hasDragEnter: !!this.boundHandleDragEnter,
+            hasDragLeave: !!this.boundHandleDragLeave,
+            hasDrop: !!this.boundHandleDrop
+        })
+
+        // Vérifier que les handlers existent avant de tenter de les retirer
+        if (!this.boundPreventDefaults &&
+            !this.boundHandleDragEnter &&
+            !this.boundHandleDragLeave &&
+            !this.boundHandleDrop) {
             console.log('No event listeners to remove')
             return
         }
 
         console.log('Removing event listeners')
 
-        // Nettoyer les event listeners
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            if (this.boundPreventDefaults) {
+        // Nettoyer les event listeners seulement s'ils existent
+        if (this.boundPreventDefaults) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 document.body.removeEventListener(eventName, this.boundPreventDefaults, false)
-            }
-        })
+            })
+        }
 
         if (this.boundHandleDragEnter) {
             document.body.removeEventListener('dragenter', this.boundHandleDragEnter, false)
@@ -166,16 +153,16 @@ export default class extends Controller {
         if (this.boundHandleDrop) {
             document.body.removeEventListener('drop', this.boundHandleDrop, false)
         }
+
+        console.log('Event listeners removed successfully')
     }
 
     disconnect() {
-        // Nettoyer les event listeners LiveComponent
-        if (this.boundHandleLiveUpdate) {
-            const liveEvents = ['live:update-finish', 'live:render-finished', 'live:render']
-            liveEvents.forEach(eventName => {
-                document.removeEventListener(eventName, this.boundHandleLiveUpdate)
-            })
+        // Nettoyer l'intervalle de polling
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval)
         }
+
         // Nettoyer les event listeners du drag & drop
         this.removeEventListeners()
     }

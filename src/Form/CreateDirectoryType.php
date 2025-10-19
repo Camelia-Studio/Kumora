@@ -25,7 +25,7 @@ class CreateDirectoryType extends AbstractType
         ;
 
         // Ajouter les champs de permissions uniquement pour les dossiers racine
-        if ($options['is_root_directory']) {
+        if (true === $options['is_root_directory']) {
             $builder
                 ->add('ownerRole', EntityType::class, [
                     'class' => AccessGroup::class,

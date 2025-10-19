@@ -452,7 +452,7 @@ class FilesController extends AbstractController
         $uploadData = $request->request->all('upload');
         $paths = $uploadData['paths'] ?? [];
 
-        if (empty($files)) {
+        if ([] === $files) {
             return $this->json(['error' => 'Aucun fichier reçu'], 400);
         }
 
@@ -627,7 +627,7 @@ class FilesController extends AbstractController
             $autocompleteUrl = '/kumora/autocomplete/path/file?exclude=' . urlencode(json_encode($excludePaths, JSON_UNESCAPED_SLASHES));
         }
 
-        $form = $this->createForm($formType, $newPath, $autocompleteUrl ? ['autocomplete_url' => $autocompleteUrl] : []);
+        $form = $this->createForm($formType, $newPath, null !== $autocompleteUrl ? ['autocomplete_url' => $autocompleteUrl] : []);
 
         $form->handleRequest($request);
 
@@ -725,8 +725,10 @@ class FilesController extends AbstractController
                     $finalPath
                 );
 
-                if ($parentDir->getName() === $path) {
-                    $this->entityManager->remove($parentDir);
+                // Si on déplace un dossier de premier niveau, supprimer son ParentDirectory
+                $oldParentDirectory = $this->parentDirectoryRepository->findOneBy(['name' => basename($path)]);
+                if ($oldParentDirectory instanceof ParentDirectory) {
+                    $this->entityManager->remove($oldParentDirectory);
                     $this->entityManager->flush();
                 }
 
