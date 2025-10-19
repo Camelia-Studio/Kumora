@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Entity\User;
 use App\Entity\UserAction;
+use App\Repository\ParentDirectoryRepository;
 use App\Repository\UserActionRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -15,6 +16,7 @@ class UserActionLogger
     public function __construct(
         private readonly UserActionRepository $userActionRepository,
         private readonly Security $security,
+        private readonly ParentDirectoryRepository $parentDirectoryRepository,
     ) {
     }
 
@@ -30,6 +32,22 @@ class UserActionLogger
         $user ??= $this->security->getUser();
         if (!$user instanceof User) {
             return;
+        }
+
+        // Enrichir les métadonnées avec l'info public/privé du dossier
+        $metadata ??= [];
+        if (null !== $targetPath && '' !== $targetPath) {
+            $pathParts = explode('/', $targetPath);
+            $rootFolderName = $pathParts[0];
+
+            $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $rootFolderName]);
+
+            // Stocker si c'est un dossier public ou non
+            // Si pas de ParentDirectory, considérer comme public (dossier normal, pas de partage)
+            $metadata['is_public'] = null === $parentDir || $parentDir->isPublic();
+        } else {
+            // Actions sans targetPath (ex: changements de permissions) sont considérées publiques
+            $metadata['is_public'] = true;
         }
 
         $userAction = new UserAction();
