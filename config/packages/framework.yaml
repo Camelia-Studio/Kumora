@@ -5,7 +5,9 @@ framework:
     csrf_protection:
         stateless_token_ids: ['submit', 'authenticate', 'logout']
     # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    session:
+        cookie_lifetime: 86400
+        gc_maxlifetime: 86400
 
     #esi: true
     #fragments: true

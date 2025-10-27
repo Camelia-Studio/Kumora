@@ -30,8 +30,13 @@ final class FileVoter extends Voter
         $realSubject = $subject;
         $user = $token->getUser();
 
-        $parentDirectoryPermissionsVisiteurRead = array_filter($realSubject->getParentDirectoryPermissions()->toArray(), fn (ParentDirectoryPermission $parentDirectoryPermission) => $this->accessGroupRepository->getLowestRole() === $parentDirectoryPermission->getRole());
+        $lowestRole = $this->accessGroupRepository->getLowestRole();
 
+        if ($lowestRole === $realSubject->getOwnerRole()) {
+            return true;
+        }
+
+        $parentDirectoryPermissionsVisiteurRead = array_filter($realSubject->getParentDirectoryPermissions()->toArray(), static fn (ParentDirectoryPermission $parentDirectoryPermission) => $lowestRole === $parentDirectoryPermission->getRole());
         if ([] !== $parentDirectoryPermissionsVisiteurRead && !($user instanceof User)) {
             return 'file_read' === $attribute && array_values($parentDirectoryPermissionsVisiteurRead)[0]->isRead();
         }
