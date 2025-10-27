@@ -340,7 +340,7 @@
                     {% endif %}
                     <td class="px-6 py-4 flex gap-2 light:text-black links-total">
                         {% if file.type == 'file' %}
-                            <button title="Permet de voir le fichier" onclick="openPreviewModal('{{ file.path|basename }}', '{{ file.previewUrl }}', '{{ file.url }}')" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:eye" /></button>
+                            <button title="Permet de voir le fichier" onclick="openPreviewModal('{{ file.path|basename }}', '{{ file.previewUrl }}', '{{ file.url }}')" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6 cursor-pointer" name="fa6-solid:eye" /></button>
                             <button title="Permet de copier le lien de prévisualisation du fichier" onclick="navigator.clipboard.writeText('{{ file.previewUrl }}'); customAlert('Lien copié avec succès !', 'Copie réussie')"  class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6 cursor-pointer" name="fa6-solid:clipboard" /></button>
                             <a title="Permet de télécharger le fichier" href="{{ file.url }}" class="hover:text-blue-700 duration-300"><twig:ux:icon class="w-6 h-6" name="fa6-solid:download" /></a>
                             {% if is_granted('file_write', parentDirectory) %}
