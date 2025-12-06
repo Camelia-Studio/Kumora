@@ -274,9 +274,7 @@ class FilesController extends AbstractController
 
             $defaultAdapter->write($basePath . '/' . $name . '/.gitkeep', '');
 
-            // Log de l'action de création de dossier
             $folderPath = '' === $basePath ? $name : $basePath . '/' . $name;
-            $this->actionLogger->logFolderCreate($folderPath);
 
             // si basePath est vide, on crée un parentDirectory
             if ($isRootDirectory) {
@@ -306,6 +304,12 @@ class FilesController extends AbstractController
 
                 $this->entityManager->persist($parentDirectory);
                 $this->entityManager->flush();
+
+                // Log de l'action de création de dossier racine avec métadonnées de confidentialité
+                $this->actionLogger->logFolderCreate($folderPath, ['is_public' => $parentDirectory->isPublic()]);
+            } else {
+                // Log de l'action de création de sous-dossier
+                $this->actionLogger->logFolderCreate($folderPath);
             }
 
             $this->addFlash('success', 'Le dossier a bien été créé.');

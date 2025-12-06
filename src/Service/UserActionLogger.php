@@ -67,9 +67,14 @@ class UserActionLogger
         string $folderPath,
         ?array $metadata = null,
     ): void {
+        $isPrivate = $this->isPrivateAction($folderPath, $metadata);
+        $description = $isPrivate
+            ? $this->getPrivateDescription(UserAction::ACTION_FOLDER_CREATE)
+            : "Création du dossier '{$folderPath}'";
+
         $this->logAction(
             UserAction::ACTION_FOLDER_CREATE,
-            "Création du dossier '{$folderPath}'",
+            $description,
             $folderPath,
             null,
             null,
@@ -82,8 +87,9 @@ class UserActionLogger
         ?UploadedFile $uploadedFile = null,
     ): void {
         $metadata = [];
+        $isPrivate = $this->isPrivateAction($filePath);
 
-        if (null !== $uploadedFile) {
+        if (null !== $uploadedFile && !$isPrivate) {
             // Informations sûres de l'UploadedFile
             $metadata["original_name"] = $uploadedFile->getClientOriginalName();
             $metadata["mime_type"] = $uploadedFile->getClientMimeType();
@@ -115,9 +121,13 @@ class UserActionLogger
             }
         }
 
+        $description = $isPrivate
+            ? $this->getPrivateDescription(UserAction::ACTION_FILE_UPLOAD)
+            : "Upload du fichier '{$filePath}'";
+
         $this->logAction(
             UserAction::ACTION_FILE_UPLOAD,
-            "Upload du fichier '{$filePath}'",
+            $description,
             $filePath,
             null,
             null,
@@ -202,9 +212,14 @@ class UserActionLogger
 
     public function logFileMove(string $oldPath, string $newPath): void
     {
+        $isPrivate = $this->isPrivateAction($oldPath) || $this->isPrivateAction($newPath);
+        $description = $isPrivate
+            ? $this->getPrivateDescription(UserAction::ACTION_FILE_MOVE)
+            : "Déplacement du fichier de '{$oldPath}' vers '{$newPath}'";
+
         $this->logAction(
             UserAction::ACTION_FILE_MOVE,
-            "Déplacement du fichier de '{$oldPath}' vers '{$newPath}'",
+            $description,
             $newPath,
             $oldPath,
             $newPath,
@@ -213,9 +228,14 @@ class UserActionLogger
 
     public function logFolderMove(string $oldPath, string $newPath): void
     {
+        $isPrivate = $this->isPrivateAction($oldPath) || $this->isPrivateAction($newPath);
+        $description = $isPrivate
+            ? $this->getPrivateDescription(UserAction::ACTION_FOLDER_MOVE)
+            : "Déplacement du dossier de '{$oldPath}' vers '{$newPath}'";
+
         $this->logAction(
             UserAction::ACTION_FOLDER_MOVE,
-            "Déplacement du dossier de '{$oldPath}' vers '{$newPath}'",
+            $description,
             $newPath,
             $oldPath,
             $newPath,
@@ -227,9 +247,14 @@ class UserActionLogger
         string $newName,
         string $path,
     ): void {
+        $isPrivate = $this->isPrivateAction($path);
+        $description = $isPrivate
+            ? $this->getPrivateDescription(UserAction::ACTION_FILE_RENAME)
+            : "Renommage du fichier '{$oldName}' en '{$newName}'";
+
         $this->logAction(
             UserAction::ACTION_FILE_RENAME,
-            "Renommage du fichier '{$oldName}' en '{$newName}'",
+            $description,
             $path,
             $oldName,
             $newName,
@@ -241,9 +266,14 @@ class UserActionLogger
         string $newName,
         string $path,
     ): void {
+        $isPrivate = $this->isPrivateAction($path);
+        $description = $isPrivate
+            ? $this->getPrivateDescription(UserAction::ACTION_FOLDER_RENAME)
+            : "Renommage du dossier '{$oldName}' en '{$newName}'";
+
         $this->logAction(
             UserAction::ACTION_FOLDER_RENAME,
-            "Renommage du dossier '{$oldName}' en '{$newName}'",
+            $description,
             $path,
             $oldName,
             $newName,
@@ -252,18 +282,28 @@ class UserActionLogger
 
     public function logFileDelete(string $filePath): void
     {
+        $isPrivate = $this->isPrivateAction($filePath);
+        $description = $isPrivate
+            ? $this->getPrivateDescription(UserAction::ACTION_FILE_DELETE)
+            : "Suppression du fichier '{$filePath}'";
+
         $this->logAction(
             UserAction::ACTION_FILE_DELETE,
-            "Suppression du fichier '{$filePath}'",
+            $description,
             $filePath,
         );
     }
 
     public function logFolderDelete(string $folderPath): void
     {
+        $isPrivate = $this->isPrivateAction($folderPath);
+        $description = $isPrivate
+            ? $this->getPrivateDescription(UserAction::ACTION_FOLDER_DELETE)
+            : "Suppression du dossier '{$folderPath}'";
+
         $this->logAction(
             UserAction::ACTION_FOLDER_DELETE,
-            "Suppression du dossier '{$folderPath}'",
+            $description,
             $folderPath,
         );
     }
@@ -273,12 +313,55 @@ class UserActionLogger
         string $oldPermissions,
         string $newPermissions,
     ): void {
+        $isPrivate = $this->isPrivateAction($folderPath);
+        $description = $isPrivate
+            ? $this->getPrivateDescription(UserAction::ACTION_PERMISSION_CHANGE)
+            : "Modification des permissions du dossier '{$folderPath}'";
+
         $this->logAction(
             UserAction::ACTION_PERMISSION_CHANGE,
-            "Modification des permissions du dossier '{$folderPath}'",
+            $description,
             $folderPath,
             $oldPermissions,
             $newPermissions,
         );
+    }
+
+    private function isPrivateAction(string $path, ?array $metadata = null): bool
+    {
+        if (null !== $metadata && isset($metadata['is_public'])) {
+            return !$metadata['is_public'];
+        }
+
+        if ('' === $path) {
+            return true;
+        }
+
+        $pathParts = explode('/', $path);
+        $rootFolderName = $pathParts[0];
+
+        $parentDir = $this->parentDirectoryRepository->findOneBy(['name' => $rootFolderName]);
+
+        if (null === $parentDir) {
+            return true;
+        }
+
+        return !$parentDir->isPublic();
+    }
+
+    private function getPrivateDescription(string $actionType): string
+    {
+        return match ($actionType) {
+            UserAction::ACTION_FOLDER_CREATE => "Création d'un dossier racine privé",
+            UserAction::ACTION_FILE_UPLOAD => "Upload d'un fichier",
+            UserAction::ACTION_FILE_MOVE => "Déplacement d'un fichier",
+            UserAction::ACTION_FOLDER_MOVE => "Déplacement d'un dossier",
+            UserAction::ACTION_FILE_RENAME => "Renommage d'un fichier",
+            UserAction::ACTION_FOLDER_RENAME => "Renommage d'un dossier",
+            UserAction::ACTION_FILE_DELETE => "Suppression d'un fichier",
+            UserAction::ACTION_FOLDER_DELETE => "Suppression d'un dossier",
+            UserAction::ACTION_PERMISSION_CHANGE => "Modification de permissions",
+            default => "Action sur un élément privé",
+        };
     }
 }
