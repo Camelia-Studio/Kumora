@@ -68,16 +68,26 @@
         </div>
 
         {# Action buttons #}
-        {% if this.parentDir == null or (this.parentDir != null and is_granted('file_write', this.parentDir)) %}
-            <div class="flex flex-col lg:flex-row lg:justify-end gap-2">
+        <div class="flex flex-col lg:flex-row lg:justify-between gap-2">
+            <div class="hidden lg:flex gap-2">
+                <button
+                    type="button"
+                    data-action="live#action"
+                    data-live-action-param="toggleViewMode"
+                    class="inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 rounded-lg dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 focus:outline-none dark:focus:ring-gray-700 transition-colors"
+                    title="{{ viewMode == 'list' ? 'Affichage en grille' : 'Affichage en liste' }}">
+                    <twig:ux:icon name="{{ viewMode == 'list' ? 'fa6-solid:table-cells-large' : 'fa6-solid:table-list' }}" class="w-4 h-4" />
+                </button>
+            </div>
+            {% if this.parentDir == null or (this.parentDir != null and is_granted('file_write', this.parentDir)) %}
                 <a href="{{ path('app_files_create_directory', {
                     base: path
                 }) }}" class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 rounded-lg dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors w-full lg:w-auto">
                     <twig:ux:icon name="fa6-solid:folder-plus" class="w-4 h-4 mr-2" />
                     Créer un dossier
                 </a>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
     <div class="mt-4">
         {% if path != '' %}
@@ -99,7 +109,8 @@
 
 
 
-    {# Desktop Table View #}
+    {# Desktop List View #}
+    {% if viewMode == 'list' %}
     <div class="hidden lg:block relative overflow-x-auto mt-4">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -394,8 +405,30 @@
             </tbody>
         </table>
     </div>
+    {% endif %}
 
-    {# Mobile Card View #}
+    {# Desktop Grid View #}
+    {% if viewMode == 'grid' %}
+    <div class="hidden lg:block mt-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {% for file in this.files %}
+                {% if this.parentDir == null %}
+                    {% set parentDirectory = get_parent_dir(file.path) %}
+                {% else %}
+                    {% set parentDirectory = this.parentDir %}
+                {% endif %}
+                <twig:FileGridCard
+                    :file="file"
+                    :parentDirectory="parentDirectory"
+                    :selectedFiles="selectedFiles"
+                    :search="search"
+                />
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Mobile Grid View (always grid on mobile) #}
     <div class="lg:hidden mt-4">
         {# Mobile Sort Controls #}
         <div class="mb-4 flex items-center gap-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
@@ -419,134 +452,19 @@
             </button>
         </div>
 
-        <div class="space-y-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {% for file in this.files %}
             {% if this.parentDir == null %}
                 {% set parentDirectory = get_parent_dir(file.path) %}
             {% else %}
                 {% set parentDirectory = this.parentDir %}
             {% endif %}
-            
-            <div class="{{ parentDirectory.public ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-600' }} border rounded-lg p-4">
-                {# File Header #}
-                <div class="flex items-center gap-3 mb-3">
-                    <input
-                        type="checkbox"
-                        data-action="live#action"
-                        data-live-action-param="toggleSelection"
-                        data-live-file-path-param="{{ file.path }}"
-                        {{ file.path in selectedFiles ? 'checked' : '' }}
-                        class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 cursor-pointer flex-shrink-0">
-                    {% if file.type == 'file' %}
-                        {% if not parentDirectory.public %}
-                            <twig:ux:icon name="fa6-solid:lock" class="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mr-1" />
-                        {% endif %}
-                        <twig:ux:icon name="{{ getIcons(file.path|basename) }}" class="w-8 h-8 flex-shrink-0" />
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-medium text-gray-900 dark:text-white truncate">{{ file.path|basename }}</h3>
-                            {% if search != '' and file.relativePath != file.path|basename %}
-                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ file.relativePath }}</p>
-                            {% endif %}
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                {{ file.size|show_size }} • {{ file.last_modified|time_diff }}
-                            </p>
-                        </div>
-                    {% else %}
-                        {% if not parentDirectory.public %}
-                            <twig:ux:icon name="fa6-solid:lock" class="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mr-1" />
-                        {% endif %}
-                        <twig:ux:icon name="line-md:folder-filled" class="w-8 h-8 flex-shrink-0" />
-                        <div class="flex-1 min-w-0">
-                            <button
-                                type="button"
-                                data-model="path"
-                                data-value="{{ file.path }}"
-                                data-action="live#update"
-                                class="font-medium text-gray-900 dark:text-white truncate text-left w-full">
-                                {{ file.path|basename }}
-                            </button>
-                            {% if search != '' and file.relativePath != file.path|basename %}
-                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ file.relativePath }}</p>
-                            {% endif %}
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                {% if file.type == 'dir' and file.size < 0 %}
-                                    <span data-controller="folder-size"
-                                          data-folder-size-path-value="{{ file.path }}"
-                                          data-folder-size-calculate-url-value="{{ path('app_files_calculate_size') }}">-</span>
-                                {% else %}
-                                    {{ file.size|show_size }}
-                                {% endif %}
-                                • {{ file.last_modified|time_diff }}
-                            </p>
-                        </div>
-                    {% endif %}
-                </div>
-
-                {# Access Groups #}
-                <div class="mb-3">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Groupes d'accès:</p>
-                    {% if parentDirectory.public %}
-                        <div class="flex gap-1 flex-wrap">
-                            {% for parentRole in getHigherRoles(parentDirectory.ownerRole) %}
-                                <img class="w-6 h-6 rounded-full" title="{{ parentRole.name }}" src="{{ parentRole.image ?? ('https://ui-avatars.com/api/?name=' ~ parentRole.name) }}" alt="">
-                            {% endfor %}
-                            {% if parentDirectory.ownerRole is not null %}
-                                <img class="w-6 h-6 rounded-full" title="{{ parentDirectory.ownerRole.name }}" src="{{ parentDirectory.ownerRole.image ?? ('https://ui-avatars.com/api/?name=' ~ parentDirectory.ownerRole.name) }}" alt="">
-                            {% endif %}
-                            {% for permission in parentDirectory.parentDirectoryPermissions %}
-                                <img class="w-6 h-6 rounded-full" title="{{ permission.role.name }}" src="{{ parentDirectory.ownerRole.image ?? ('https://ui-avatars.com/api/?name=' ~ permission.role.name) }}" alt="">
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="flex items-center gap-1">
-                            <span class="text-sm text-gray-600 dark:text-gray-300">Dossier privé</span>
-                        </div>
-                    {% endif %}
-                </div>
-
-                {# Actions #}
-                <div class="flex gap-2 justify-end flex-wrap">
-                    {% if file.type == 'file' %}
-                        <button title="Voir" onclick="openPreviewModal('{{ file.path|basename }}', '{{ file.previewUrl }}', '{{ file.url }}')" class="p-2 text-gray-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg duration-300 dark:text-gray-400 dark:hover:text-blue-500 dark:hover:bg-blue-900/20">
-                            <twig:ux:icon class="w-5 h-5" name="fa6-solid:eye" />
-                        </button>
-                        <button title="Copier lien" onclick="navigator.clipboard.writeText('{{ file.previewUrl }}'); customAlert('Lien copié avec succès !', 'Copie réussie')" class="p-2 text-gray-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg duration-300 dark:text-gray-400 dark:hover:text-blue-500 dark:hover:bg-blue-900/20">
-                            <twig:ux:icon class="w-5 h-5" name="fa6-solid:clipboard" />
-                        </button>
-                        <a title="Télécharger" href="{{ file.url }}" class="p-2 text-gray-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg duration-300 dark:text-gray-400 dark:hover:text-blue-500 dark:hover:bg-blue-900/20">
-                            <twig:ux:icon class="w-5 h-5" name="fa6-solid:download" />
-                        </a>
-                        {% if is_granted('file_write', parentDirectory) %}
-                            <a title="Renommer" href="{{ path('app_files_rename', { path: file.path }) }}" class="p-2 text-gray-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg duration-300 dark:text-gray-400 dark:hover:text-blue-500 dark:hover:bg-blue-900/20">
-                                <twig:ux:icon class="w-5 h-5" name="fa6-solid:pencil" />
-                            </a>
-                            <a title="Déplacer" href="{{ path('app_files_move', { path: file.path }) }}" class="p-2 text-gray-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg duration-300 dark:text-gray-400 dark:hover:text-blue-500 dark:hover:bg-blue-900/20">
-                                <twig:ux:icon class="w-5 h-5" name="mdi:file-move" />
-                            </a>
-                            <a title="Supprimer" onclick="event.preventDefault(); const url = this.href; customConfirm('Êtes-vous sûr de vouloir supprimer ce fichier ?', 'Supprimer le fichier').then(confirmed => { if (confirmed) { window.location.href = url } })" href="{{ path('app_files_delete', { filename: file.path }) }}" class="p-2 text-gray-600 hover:text-red-700 hover:bg-red-50 rounded-lg duration-300 dark:text-gray-400 dark:hover:text-red-500 dark:hover:bg-red-900/20">
-                                <twig:ux:icon class="w-5 h-5" name="fa6-solid:trash-can" />
-                            </a>
-                        {% endif %}
-                    {% else %}
-                        {% if this.parentDir == null and (parentDirectory.userCreated == app.user or (parentDirectory.isPublic and app.user.accessGroup == getHighestRole())) %}
-                            <a href="{{ path('app_files_file_edit_permission', { parentDir: parentDirectory.name }) }}" class="p-2 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg duration-300 dark:text-gray-400 dark:hover:text-yellow-500 dark:hover:bg-yellow-900/20" title="Permissions">
-                                <twig:ux:icon class="w-5 h-5" name="fa6-solid:shield" />
-                            </a>
-                        {% endif %}
-                        {% if is_granted('file_write', parentDirectory) %}
-                            <a href="{{ path('app_files_rename-directory', { path: file.path }) }}" class="p-2 text-gray-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg duration-300 dark:text-gray-400 dark:hover:text-blue-500 dark:hover:bg-blue-900/20" title="Renommer">
-                                <twig:ux:icon class="w-5 h-5" name="fa6-solid:pencil" />
-                            </a>
-                            <a title="Déplacer" href="{{ path('app_files_move', { path: file.path }) }}" class="p-2 text-gray-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg duration-300 dark:text-gray-400 dark:hover:text-blue-500 dark:hover:bg-blue-900/20">
-                                <twig:ux:icon class="w-5 h-5" name="mdi:folder-move" />
-                            </a>
-                            <a href="{{ path('app_files_delete_directory', { path: file.path }) }}" class="p-2 text-gray-600 hover:text-red-700 hover:bg-red-50 rounded-lg duration-300 dark:text-gray-400 dark:hover:text-red-500 dark:hover:bg-red-900/20" title="Supprimer" onclick="event.preventDefault(); const url = this.href; customConfirm('Êtes-vous sûr de vouloir supprimer ce dossier ?', 'Supprimer le dossier').then(confirmed => { if (confirmed) { window.location.href = url } })">
-                                <twig:ux:icon class="w-5 h-5" name="fa6-solid:trash-can" />
-                            </a>
-                        {% endif %}
-                    {% endif %}
-                </div>
-            </div>
+            <twig:FileGridCard
+                :file="file"
+                :parentDirectory="parentDirectory"
+                :selectedFiles="selectedFiles"
+                :search="search"
+            />
         {% endfor %}
         </div>
     </div>

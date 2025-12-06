@@ -1,0 +1,114 @@
+<div class="relative group {{ parentDirectory.public ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-600' }} border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+    {# Checkbox overlay #}
+    <div class="absolute top-2 left-2 z-10">
+        <input
+            type="checkbox"
+            data-action="live#action"
+            data-live-action-param="toggleSelection"
+            data-live-file-path-param="{{ file.path }}"
+            {{ this.isSelected ? 'checked' : '' }}
+            class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 bg-white/90 dark:bg-gray-800/90 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 cursor-pointer shadow-sm">
+    </div>
+
+    {# Private badge #}
+    {% if not parentDirectory.public %}
+        <div class="absolute top-2 right-2 z-10">
+            <twig:ux:icon name="fa6-solid:lock" class="w-3 h-3 sm:w-4 sm:h-4 text-amber-600 dark:text-amber-500 drop-shadow" />
+        </div>
+    {% endif %}
+
+    {# Preview/Icon area #}
+    <div class="relative">
+        {% if file.type == 'file' %}
+            <button onclick="openPreviewModal('{{ file.path|basename }}', '{{ file.previewUrl }}', '{{ file.url }}')" class="w-full aspect-square flex items-center justify-center bg-gray-100 dark:bg-gray-700 p-2 sm:p-4 cursor-pointer">
+                {% if this.isImage %}
+                    <img src="{{ file.previewUrl }}" alt="{{ file.path|basename }}" class="w-full h-full object-contain">
+                {% else %}
+                    <twig:ux:icon name="{{ getIcons(file.path|basename) }}" class="w-12 h-12 sm:w-16 sm:h-16 text-gray-600 dark:text-gray-400" />
+                {% endif %}
+            </button>
+        {% else %}
+            <button
+                type="button"
+                data-model="path"
+                data-value="{{ file.path }}"
+                data-action="live#update"
+                class="w-full aspect-square flex items-center justify-center bg-gray-100 dark:bg-gray-700 p-2 sm:p-4 cursor-pointer">
+                <twig:ux:icon name="line-md:folder-filled" class="w-12 h-12 sm:w-16 sm:h-16 text-blue-600 dark:text-blue-400" />
+            </button>
+        {% endif %}
+
+        {# Actions overlay (desktop only, visible on hover) #}
+        <div class="hidden lg:flex absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center gap-2 pointer-events-none">
+            <div class="pointer-events-auto flex gap-2">
+                {% if file.type == 'file' %}
+                    <button title="Voir" onclick="openPreviewModal('{{ file.path|basename }}', '{{ file.previewUrl }}', '{{ file.url }}')" class="p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                        <twig:ux:icon class="w-5 h-5" name="fa6-solid:eye" />
+                    </button>
+                    <a title="Télécharger" href="{{ file.url }}" class="p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                        <twig:ux:icon class="w-5 h-5" name="fa6-solid:download" />
+                    </a>
+                    {% if is_granted('file_write', parentDirectory) %}
+                        <a title="Supprimer" onclick="event.preventDefault(); const url = this.href; customConfirm('Êtes-vous sûr de vouloir supprimer ce fichier ?', 'Supprimer le fichier').then(confirmed => { if (confirmed) { window.location.href = url } })" href="{{ path('app_files_delete', { filename: file.path }) }}" class="p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                            <twig:ux:icon class="w-5 h-5" name="fa6-solid:trash-can" />
+                        </a>
+                    {% endif %}
+                {% else %}
+                    {% if is_granted('file_write', parentDirectory) %}
+                        <a href="{{ path('app_files_delete_directory', { path: file.path }) }}" class="p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors" title="Supprimer" onclick="event.preventDefault(); const url = this.href; customConfirm('Êtes-vous sûr de vouloir supprimer ce dossier ?', 'Supprimer le dossier').then(confirmed => { if (confirmed) { window.location.href = url } })">
+                            <twig:ux:icon class="w-5 h-5" name="fa6-solid:trash-can" />
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# File info #}
+    <div class="p-2 sm:p-3">
+        <p class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate" title="{{ file.path|basename }}">
+            {{ file.path|basename }}
+        </p>
+        {% if search != '' and file.relativePath != file.path|basename %}
+            <p class="text-xs text-gray-500 dark:text-gray-400 truncate" title="{{ file.relativePath }}">{{ file.relativePath }}</p>
+        {% endif %}
+        <div class="flex items-center gap-1 sm:gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {% if file.type == 'dir' and file.size < 0 %}
+                <span data-controller="folder-size"
+                      data-folder-size-path-value="{{ file.path }}"
+                      data-folder-size-calculate-url-value="{{ path('app_files_calculate_size') }}">-</span>
+            {% else %}
+                <span>{{ file.size|show_size }}</span>
+            {% endif %}
+            <span class="hidden sm:inline">•</span>
+            <span class="hidden sm:inline">{{ file.last_modified|time_diff }}</span>
+        </div>
+
+        {# Actions buttons (mobile only, below metadata) #}
+        <div class="grid grid-cols-1 gap-2 mt-2 lg:hidden">
+            {% if file.type == 'file' %}
+                <button onclick="openPreviewModal('{{ file.path|basename }}', '{{ file.previewUrl }}', '{{ file.url }}')" class="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors">
+                    <twig:ux:icon class="w-4 h-4" name="fa6-solid:eye" />
+                    <span>Voir</span>
+                </button>
+                <a href="{{ file.url }}" class="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors">
+                    <twig:ux:icon class="w-4 h-4" name="fa6-solid:download" />
+                    <span>Télécharger</span>
+                </a>
+                {% if is_granted('file_write', parentDirectory) %}
+                    <a onclick="event.preventDefault(); const url = this.href; customConfirm('Êtes-vous sûr de vouloir supprimer ce fichier ?', 'Supprimer le fichier').then(confirmed => { if (confirmed) { window.location.href = url } })" href="{{ path('app_files_delete', { filename: file.path }) }}" class="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-white bg-red-600 hover:bg-red-700 rounded transition-colors">
+                        <twig:ux:icon class="w-4 h-4" name="fa6-solid:trash-can" />
+                        <span>Supprimer</span>
+                    </a>
+                {% endif %}
+            {% else %}
+                {% if is_granted('file_write', parentDirectory) %}
+                    <a href="{{ path('app_files_delete_directory', { path: file.path }) }}" onclick="event.preventDefault(); const url = this.href; customConfirm('Êtes-vous sûr de vouloir supprimer ce dossier ?', 'Supprimer le dossier').then(confirmed => { if (confirmed) { window.location.href = url } })" class="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-white bg-red-600 hover:bg-red-700 rounded transition-colors">
+                        <twig:ux:icon class="w-4 h-4" name="fa6-solid:trash-can" />
+                        <span>Supprimer</span>
+                    </a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>

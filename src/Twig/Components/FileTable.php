@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Twig\Components;
 
 use App\Entity\ParentDirectory;
+use App\Entity\User;
 use App\Repository\ParentDirectoryRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -25,6 +27,7 @@ final class FileTable
         private readonly Filesystem $defaultAdapter,
         private readonly ParentDirectoryRepository $parentDirectoryRepository,
         private readonly Security $security,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -39,6 +42,21 @@ final class FileTable
 
     #[LiveProp(writable: true, onUpdated: 'getFiles', url: true)]
     public string $search = '';
+
+    #[LiveProp(writable: true)]
+    public ?string $viewMode = null;
+
+    public function mount(): void
+    {
+        if (null === $this->viewMode) {
+            $user = $this->security->getUser();
+            if ($user instanceof User) {
+                $this->viewMode = $user->getPreferredViewMode();
+            } else {
+                $this->viewMode = 'list';
+            }
+        }
+    }
 
     /**
      * @var array<string>
@@ -338,5 +356,17 @@ final class FileTable
     public function clearSelection(): void
     {
         $this->selectedFiles = [];
+    }
+
+    #[LiveAction]
+    public function toggleViewMode(): void
+    {
+        $this->viewMode = 'list' === $this->viewMode ? 'grid' : 'list';
+
+        $user = $this->security->getUser();
+        if ($user instanceof User) {
+            $user->setPreferredViewMode($this->viewMode);
+            $this->entityManager->flush();
+        }
     }
 }

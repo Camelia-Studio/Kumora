@@ -55,6 +55,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $lastLoginAt = null;
 
+    #[ORM\Column(length: 10, options: ['default' => 'list'])]
+    private string $preferredViewMode = 'list';
+
     public function __construct()
     {
         $this->parentDirectories = new ArrayCollection();
@@ -195,6 +198,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setLastLoginAt(?\DateTimeImmutable $lastLoginAt): static
     {
         $this->lastLoginAt = $lastLoginAt;
+
+        return $this;
+    }
+
+    public function getPreferredViewMode(): string
+    {
+        return $this->preferredViewMode;
+    }
+
+    public function setPreferredViewMode(string $preferredViewMode): static
+    {
+        $this->preferredViewMode = $preferredViewMode;
 
         return $this;
     }
