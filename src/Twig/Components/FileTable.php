@@ -50,11 +50,7 @@ final class FileTable
     {
         if (null === $this->viewMode) {
             $user = $this->security->getUser();
-            if ($user instanceof User) {
-                $this->viewMode = $user->getPreferredViewMode();
-            } else {
-                $this->viewMode = 'list';
-            }
+            $this->viewMode = $user instanceof User ? $user->getPreferredViewMode() : 'list';
         }
     }
 

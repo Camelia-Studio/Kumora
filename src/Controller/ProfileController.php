@@ -13,10 +13,10 @@ use App\Form\PasswordFormType;
 use App\Repository\UserActionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -132,7 +132,7 @@ class ProfileController extends AbstractController
             $avatarFile = $form->get('avatar')->getData();
 
             $oldFilename = $user->getAvatarFilename();
-            if ($oldFilename) {
+            if (null !== $oldFilename) {
                 $oldPath = $this->projectDir . '/public/uploads/avatars/' . $oldFilename;
                 if (file_exists($oldPath)) {
                     unlink($oldPath);
@@ -170,7 +170,7 @@ class ProfileController extends AbstractController
         }
 
         $filename = $user->getAvatarFilename();
-        if ($filename) {
+        if (null !== $filename) {
             $path = $this->projectDir . '/public/uploads/avatars/' . $filename;
             if (file_exists($path)) {
                 unlink($path);
