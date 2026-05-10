@@ -60,41 +60,37 @@ jobs:
       - name: Prepare release archive
         run: |
           VERSION=${{ steps.vars.outputs.version }}
-          RELEASE_DIR="/tmp/kumora-release"
 
-          rsync -a \
-            --exclude='.git' \
-            --exclude='.gitignore' \
-            --exclude='node_modules' \
-            --exclude='var/cache' \
-            --exclude='var/log' \
-            --exclude='var/data.db' \
-            --exclude='tests' \
-            --exclude='.php-cs-fixer.dist.php' \
-            --exclude='.php-cs-fixer.cache' \
-            --exclude='phpstan.dist.neon' \
-            --exclude='phpstan-baseline.neon' \
-            --exclude='rector.php' \
-            --exclude='phpunit.xml.dist' \
-            --exclude='renovate.json' \
-            --exclude='CLAUDE.md' \
-            --exclude='uploads/*' \
-            --exclude='.env.local' \
-            --exclude='.env.test' \
-            --exclude='.env.*.local' \
-            --exclude='.idea' \
-            --exclude='.vscode' \
-            --exclude='.fleet' \
-            . "${RELEASE_DIR}/"
+          # Ensure required empty directories are present in the archive
+          mkdir -p var/cache var/log
+          touch var/cache/.gitkeep var/log/.gitkeep
 
-          # Recreate required empty directories
-          mkdir -p "${RELEASE_DIR}/var/cache" "${RELEASE_DIR}/var/log"
-          mkdir -p "${RELEASE_DIR}/uploads"
-          touch "${RELEASE_DIR}/uploads/.gitkeep"
+          zip -r "kumora-${VERSION}.zip" . \
+            -x ".git/*" \
+            -x ".gitignore" \
+            -x "node_modules/*" \
+            -x "var/cache/*" \
+            -x "var/log/*" \
+            -x "var/data.db" \
+            -x "tests/*" \
+            -x ".php-cs-fixer.dist.php" \
+            -x ".php-cs-fixer.cache" \
+            -x "phpstan.dist.neon" \
+            -x "phpstan-baseline.neon" \
+            -x "rector.php" \
+            -x "phpunit.xml.dist" \
+            -x "renovate.json" \
+            -x ".env.local" \
+            -x ".env.test" \
+            -x ".env.*.local" \
+            -x ".idea/*" \
+            -x ".vscode/*" \
+            -x ".fleet/*"
 
-          cd /tmp
-          zip -r "${GITHUB_WORKSPACE}/kumora-${VERSION}.zip" kumora-release/
-          echo "Archive size: $(du -sh ${GITHUB_WORKSPACE}/kumora-${VERSION}.zip | cut -f1)"
+          # Re-add the empty directory placeholders excluded above
+          zip "kumora-${VERSION}.zip" var/cache/.gitkeep var/log/.gitkeep
+
+          echo "Archive size: $(du -sh kumora-${VERSION}.zip | cut -f1)"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
