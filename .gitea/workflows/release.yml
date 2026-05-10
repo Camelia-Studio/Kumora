@@ -1,0 +1,111 @@
+name: Build & Publish Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: intl, pdo_sqlite, pdo_mysql, pdo_pgsql, zip
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get version
+        id: vars
+        run: echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Install PHP dependencies (production)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+        env:
+          APP_ENV: prod
+          APP_SECRET: build_placeholder
+          DATABASE_URL: "sqlite:///%kernel.project_dir%/var/data.db"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build Tailwind CSS
+        run: php bin/console tailwind:build --minify
+        env:
+          APP_ENV: prod
+          APP_SECRET: build_placeholder
+
+      - name: Compile assets
+        run: php bin/console asset-map:compile
+        env:
+          APP_ENV: prod
+          APP_SECRET: build_placeholder
+
+      - name: Clear cache
+        run: php bin/console cache:clear --env=prod
+        env:
+          APP_ENV: prod
+          APP_SECRET: build_placeholder
+          DATABASE_URL: "sqlite:///%kernel.project_dir%/var/data.db"
+
+      - name: Prepare release archive
+        run: |
+          VERSION=${{ steps.vars.outputs.version }}
+          RELEASE_DIR="/tmp/kumora-release"
+
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.gitignore' \
+            --exclude='node_modules' \
+            --exclude='var/cache' \
+            --exclude='var/log' \
+            --exclude='var/data.db' \
+            --exclude='tests' \
+            --exclude='.php-cs-fixer.dist.php' \
+            --exclude='.php-cs-fixer.cache' \
+            --exclude='phpstan.dist.neon' \
+            --exclude='phpstan-baseline.neon' \
+            --exclude='rector.php' \
+            --exclude='phpunit.xml.dist' \
+            --exclude='renovate.json' \
+            --exclude='CLAUDE.md' \
+            --exclude='uploads/*' \
+            --exclude='.env.local' \
+            --exclude='.env.test' \
+            --exclude='.env.*.local' \
+            --exclude='.idea' \
+            --exclude='.vscode' \
+            --exclude='.fleet' \
+            . "${RELEASE_DIR}/"
+
+          # Recreate required empty directories
+          mkdir -p "${RELEASE_DIR}/var/cache" "${RELEASE_DIR}/var/log"
+          mkdir -p "${RELEASE_DIR}/uploads"
+          touch "${RELEASE_DIR}/uploads/.gitkeep"
+
+          cd /tmp
+          zip -r "${GITHUB_WORKSPACE}/kumora-${VERSION}.zip" kumora-release/
+          echo "Archive size: $(du -sh ${GITHUB_WORKSPACE}/kumora-${VERSION}.zip | cut -f1)"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: kumora-${{ steps.vars.outputs.version }}
+          path: "*.zip"
+          retention-days: 30
+
+      - name: Publish on release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "*.zip"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
