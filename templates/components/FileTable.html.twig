@@ -80,12 +80,22 @@
                 </button>
             </div>
             {% if this.parentDir == null or (this.parentDir != null and is_granted('file_write', this.parentDir)) %}
-                <a href="{{ path('app_files_create_directory', {
-                    base: path
-                }) }}" class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 rounded-lg dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors w-full lg:w-auto">
-                    <twig:ux:icon name="fa6-solid:folder-plus" class="w-4 h-4 mr-2" />
-                    Créer un dossier
-                </a>
+                <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+                    {% if path != '' %}
+                        <button type="button"
+                                data-action="drag-drop-upload#triggerFileInput"
+                                class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 rounded-lg dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800 transition-colors w-full lg:w-auto">
+                            <twig:ux:icon name="fa6-solid:cloud-arrow-up" class="w-4 h-4 mr-2" />
+                            Téléverser
+                        </button>
+                    {% endif %}
+                    <a href="{{ path('app_files_create_directory', {
+                        base: path
+                    }) }}" class="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 rounded-lg dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors w-full lg:w-auto">
+                        <twig:ux:icon name="fa6-solid:folder-plus" class="w-4 h-4 mr-2" />
+                        Créer un dossier
+                    </a>
+                </div>
             {% endif %}
         </div>
     </div>

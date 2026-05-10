@@ -352,7 +352,7 @@ class UserActionLogger
     private function getPrivateDescription(string $actionType): string
     {
         return match ($actionType) {
-            UserAction::ACTION_FOLDER_CREATE => "Création d'un dossier racine privé",
+            UserAction::ACTION_FOLDER_CREATE => "Création d'un dossier privé",
             UserAction::ACTION_FILE_UPLOAD => "Upload d'un fichier",
             UserAction::ACTION_FILE_MOVE => "Déplacement d'un fichier",
             UserAction::ACTION_FOLDER_MOVE => "Déplacement d'un dossier",

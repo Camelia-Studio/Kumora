@@ -58,6 +58,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 10, options: ['default' => 'list'])]
     private string $preferredViewMode = 'list';
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $avatarFilename = null;
+
     public function __construct()
     {
         $this->parentDirectories = new ArrayCollection();
@@ -210,6 +213,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPreferredViewMode(string $preferredViewMode): static
     {
         $this->preferredViewMode = $preferredViewMode;
+
+        return $this;
+    }
+
+    public function getAvatarFilename(): ?string
+    {
+        return $this->avatarFilename;
+    }
+
+    public function setAvatarFilename(?string $avatarFilename): static
+    {
+        $this->avatarFilename = $avatarFilename;
 
         return $this;
     }

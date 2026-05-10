@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-    static targets = ["dropzone", "overlay"]
+    static targets = ["dropzone", "overlay", "fileInput"]
     static values = {
         baseUrl: String
     }
@@ -416,7 +416,7 @@ export default class extends Controller {
                     </div>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-                    <div id="upload-progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    <div id="upload-progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0"></div>
                 </div>
             </div>
         `

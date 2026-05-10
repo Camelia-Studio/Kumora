@@ -23,6 +23,11 @@
             </div>
         </div>
 
+        <input type="file" multiple
+               data-drag-drop-upload-target="fileInput"
+               data-action="change->drag-drop-upload#handleFileSelect"
+               class="hidden">
+
         <div data-drag-drop-upload-target="dropzone">
             <h1 class="text-center text-xl md:text-2xl font-bold mt-4">Liste des fichiers</h1>
             <div class="mt-4">

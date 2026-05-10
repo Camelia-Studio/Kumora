@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier mon image de profil{% endblock %}
+
+{% block body %}
+    <div class="container mx-auto px-4 md:px-8 lg:px-16 mt-4">
+        <div class="max-w-md mx-auto">
+            <div class="block p-4 md:p-6 bg-white border border-gray-200 rounded-lg shadow-xs dark:bg-gray-800 dark:border-gray-700">
+                <h3 class="mb-4 text-xl md:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Modifier mon image de profil</h3>
+
+                <div class="flex justify-center mb-6">
+                    <img src="{{ user.avatarFilename ? asset('uploads/avatars/' ~ user.avatarFilename) : get_gravatar(user.email) }}"
+                         alt="Avatar actuel"
+                         class="w-24 h-24 rounded-lg object-cover">
+                </div>
+
+                {{ form_start(form, { attr: { enctype: 'multipart/form-data' } }) }}
+                    {{ form_row(form.avatar) }}
+                    {{ form_row(form.submit) }}
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}

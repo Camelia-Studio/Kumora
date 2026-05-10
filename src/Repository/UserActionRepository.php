@@ -169,39 +169,11 @@ class UserActionRepository extends ServiceEntityRepository
 
     public function getRecentGlobalActions(int $limit = 20): array
     {
-        $actions = $this->createQueryBuilder('ua')
+        return $this->createQueryBuilder('ua')
             ->leftJoin('ua.user', 'u')
             ->orderBy('ua.createdAt', 'DESC')
-            ->setMaxResults($limit * 2) // Récupérer plus d'actions pour compenser le filtrage
+            ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
-
-        // Filtrer les actions liées à des dossiers privés en utilisant les métadonnées
-        $filteredActions = [];
-
-        foreach ($actions as $action) {
-            $metadata = $action->getMetadata();
-
-            // Vérifier la métadonnée 'is_public'
-            // Si la métadonnée n'existe pas (anciennes actions), on applique la logique de fallback
-            if (isset($metadata['is_public'])) {
-                // Utiliser la métadonnée stockée (fiable même si le dossier a été supprimé)
-                if (true === $metadata['is_public']) {
-                    $filteredActions[] = $action;
-                }
-            } else {
-                // Fallback pour les anciennes actions sans métadonnée
-                // On peut soit les inclure toutes, soit appliquer l'ancienne logique
-                // Par sécurité, on les exclut (ne pas afficher d'anciennes actions privées potentielles)
-                continue;
-            }
-
-            // S'arrêter quand on a assez d'actions filtrées
-            if (count($filteredActions) >= $limit) {
-                break;
-            }
-        }
-
-        return array_slice($filteredActions, 0, $limit);
     }
 }
